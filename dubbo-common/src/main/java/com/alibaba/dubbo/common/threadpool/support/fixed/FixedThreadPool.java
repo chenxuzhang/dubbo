@@ -30,11 +30,11 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Creates a thread pool that reuses a fixed number of threads
- *
+ * 固定大小线程池(默认200线程),核心线程数和最大线程数相等,无线程超时限制,队列大小可控(等于0为SynchronousQueue(默认),大于0为指定大小,小于0为无界队列)
  * @see java.util.concurrent.Executors#newFixedThreadPool(int)
  */
 public class FixedThreadPool implements ThreadPool {
-
+    // 默认值: threads=200,queues=0
     @Override
     public Executor getExecutor(URL url) {
         String name = url.getParameter(Constants.THREAD_NAME_KEY, Constants.DEFAULT_THREAD_NAME);

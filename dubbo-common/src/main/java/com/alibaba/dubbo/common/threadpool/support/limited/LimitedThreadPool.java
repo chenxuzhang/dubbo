@@ -29,7 +29,7 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-/**
+/**可伸缩线程池，但池中的线程数只会增长不会收缩
  * Creates a thread pool that creates new threads as needed until limits reaches. This thread pool will not shrink
  * automatically.
  */

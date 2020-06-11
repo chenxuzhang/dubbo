@@ -31,11 +31,11 @@ import java.util.concurrent.TimeUnit;
 /**
  * This thread pool is self-tuned. Thread will be recycled after idle for one minute, and new thread will be created for
  * the upcoming request.
- *
+ * 缓存线程池,空闲一分钟自动删除
  * @see java.util.concurrent.Executors#newCachedThreadPool()
  */
 public class CachedThreadPool implements ThreadPool {
-
+    // 默认值:cores=0,threads=Integer.MAX_VALUE,queues=0,alive=60秒
     @Override
     public Executor getExecutor(URL url) {
         String name = url.getParameter(Constants.THREAD_NAME_KEY, Constants.DEFAULT_THREAD_NAME);
