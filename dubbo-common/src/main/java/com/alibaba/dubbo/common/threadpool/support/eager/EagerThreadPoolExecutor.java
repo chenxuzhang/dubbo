@@ -23,14 +23,14 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
-
 /**
- * EagerThreadPoolExecutor
+ * 优先创建Worker线程池。
+ * 当任务数量大于corePoolSize 且 小于maximumPoolSize时,则创建Woker线程。反之将任务丢入队列。队列满了则抛出异常
  */
 public class EagerThreadPoolExecutor extends ThreadPoolExecutor {
 
     /**
-     * task count
+     * task count(任务计数器)
      */
     private final AtomicInteger submittedTaskCount = new AtomicInteger(0);
 
@@ -43,13 +43,13 @@ public class EagerThreadPoolExecutor extends ThreadPoolExecutor {
         super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue, threadFactory, handler);
     }
 
-    /**
+    /**获取已提交的任务数量(未执行、正在执行,但未执行完毕)
      * @return current tasks which are executed
      */
     public int getSubmittedTaskCount() {
         return submittedTaskCount.get();
     }
-
+    /** 线程执行完任务,回调afterExecute。此时任务统计减一 */
     @Override
     protected void afterExecute(Runnable r, Throwable t) {
         submittedTaskCount.decrementAndGet();
@@ -61,13 +61,13 @@ public class EagerThreadPoolExecutor extends ThreadPoolExecutor {
             throw new NullPointerException();
         }
         // do not increment in method beforeExecute!
-        submittedTaskCount.incrementAndGet();
+        submittedTaskCount.incrementAndGet(); // 任务统计加一
         try {
             super.execute(command);
         } catch (RejectedExecutionException rx) {
             // retry to offer the task into queue.
             final TaskQueue queue = (TaskQueue) super.getQueue();
-            try {
+            try { // 重试,尝试将任务加入队列
                 if (!queue.retryOffer(command, 0, TimeUnit.MILLISECONDS)) {
                     submittedTaskCount.decrementAndGet();
                     throw new RejectedExecutionException("Queue capacity is full.");

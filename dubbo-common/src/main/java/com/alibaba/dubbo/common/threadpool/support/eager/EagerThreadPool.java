@@ -40,7 +40,7 @@ public class EagerThreadPool implements ThreadPool {
         int threads = url.getParameter(Constants.THREADS_KEY, Integer.MAX_VALUE);
         int queues = url.getParameter(Constants.QUEUES_KEY, Constants.DEFAULT_QUEUES);
         int alive = url.getParameter(Constants.ALIVE_KEY, Constants.DEFAULT_ALIVE);
-
+        // 默认值: cores=0,threads=Integer.MAX_VALUE,queues=0,alive=60秒
         // init queue and executor
         TaskQueue<Runnable> taskQueue = new TaskQueue<Runnable>(queues <= 0 ? 1 : queues);
         EagerThreadPoolExecutor executor = new EagerThreadPoolExecutor(cores,
