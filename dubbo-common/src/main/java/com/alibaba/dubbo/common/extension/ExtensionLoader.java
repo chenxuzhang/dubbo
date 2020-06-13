@@ -59,36 +59,36 @@ import java.util.regex.Pattern;
 public class ExtensionLoader<T> {
 
     private static final Logger logger = LoggerFactory.getLogger(ExtensionLoader.class);
-
+    // spi加载的类路径
     private static final String SERVICES_DIRECTORY = "META-INF/services/";
-
+    // spi加载的类路径
     private static final String DUBBO_DIRECTORY = "META-INF/dubbo/";
-
+    // spi加载的类路径
     private static final String DUBBO_INTERNAL_DIRECTORY = DUBBO_DIRECTORY + "internal/";
 
     private static final Pattern NAME_SEPARATOR = Pattern.compile("\\s*[,]+\\s*");
-
+    // ExtensionLoader的缓存
     private static final ConcurrentMap<Class<?>, ExtensionLoader<?>> EXTENSION_LOADERS = new ConcurrentHashMap<Class<?>, ExtensionLoader<?>>();
-
+    // [META-INF/dubbo/internal/,META-INF/dubbo/,META-INF/services/] 目录下加载的类的实例缓存
     private static final ConcurrentMap<Class<?>, Object> EXTENSION_INSTANCES = new ConcurrentHashMap<Class<?>, Object>();
 
     // ==============================
-
+    // spi加载的接口类Class
     private final Class<?> type;
 
     private final ExtensionFactory objectFactory;
 
     private final ConcurrentMap<Class<?>, String> cachedNames = new ConcurrentHashMap<Class<?>, String>();
-
+    // [META-INF/dubbo/internal/,META-INF/dubbo/,META-INF/services/] 目录下加载的类的Class缓存
     private final Holder<Map<String, Class<?>>> cachedClasses = new Holder<Map<String, Class<?>>>();
-
+    // 类上标记@Activate注解的缓存
     private final Map<String, Activate> cachedActivates = new ConcurrentHashMap<String, Activate>();
     private final ConcurrentMap<String, Holder<Object>> cachedInstances = new ConcurrentHashMap<String, Holder<Object>>();
     private final Holder<Object> cachedAdaptiveInstance = new Holder<Object>();
-    private volatile Class<?> cachedAdaptiveClass = null;
-    private String cachedDefaultName;
+    private volatile Class<?> cachedAdaptiveClass = null; // 含有@Adaptive注解的类(自适应)
+    private String cachedDefaultName; // @SPI注解设置的value值
     private volatile Throwable createAdaptiveInstanceError;
-
+    // @SPI标记类的拓展类(装饰器方式实现)
     private Set<Class<?>> cachedWrapperClasses;
 
     private Map<String, IllegalStateException> exceptions = new ConcurrentHashMap<String, IllegalStateException>();
@@ -493,21 +493,21 @@ public class ExtensionLoader<T> {
             if (instance == null) {
                 EXTENSION_INSTANCES.putIfAbsent(clazz, clazz.newInstance());
                 instance = (T) EXTENSION_INSTANCES.get(clazz);
-            }
+            } // 实例进行注入(通过set方法)
             injectExtension(instance);
-            Set<Class<?>> wrapperClasses = cachedWrapperClasses;
+            Set<Class<?>> wrapperClasses = cachedWrapperClasses; // 包装类Class
             if (wrapperClasses != null && !wrapperClasses.isEmpty()) {
-                for (Class<?> wrapperClass : wrapperClasses) {
+                for (Class<?> wrapperClass : wrapperClasses) { // 进行实例化,然后进行注入属性,已达到对原有的实例进行AOP增强
                     instance = injectExtension((T) wrapperClass.getConstructor(type).newInstance(instance));
                 }
-            }
+            } // 返回最后包装完毕的实例
             return instance;
         } catch (Throwable t) {
             throw new IllegalStateException("Extension instance(name: " + name + ", class: " +
                     type + ")  could not be instantiated: " + t.getMessage(), t);
         }
     }
-
+    // 注入操作
     private T injectExtension(T instance) {
         try {
             if (objectFactory != null) {
@@ -551,10 +551,10 @@ public class ExtensionLoader<T> {
             throw new IllegalStateException("No such extension \"" + name + "\" for " + type.getName() + "!");
         return clazz;
     }
-
+    // 获取@SPI标记的Class信息,并缓存
     private Map<String, Class<?>> getExtensionClasses() {
         Map<String, Class<?>> classes = cachedClasses.get();
-        if (classes == null) {
+        if (classes == null) { // 双重检查
             synchronized (cachedClasses) {
                 classes = cachedClasses.get();
                 if (classes == null) {
@@ -565,7 +565,7 @@ public class ExtensionLoader<T> {
         }
         return classes;
     }
-
+    // 标记@SPI注解的类。通过[META-INF/dubbo/internal/,META-INF/dubbo/,META-INF/services/]这些目录扫描
     // synchronized in getExtensionClasses
     private Map<String, Class<?>> loadExtensionClasses() {
         final SPI defaultAnnotation = type.getAnnotation(SPI.class);
@@ -576,7 +576,7 @@ public class ExtensionLoader<T> {
                 if (names.length > 1) {
                     throw new IllegalStateException("more than 1 default extension name on extension " + type.getName()
                             + ": " + Arrays.toString(names));
-                }
+                } // 默认名称,通过getDefaultExtension() 进行使用获取拓展
                 if (names.length == 1) cachedDefaultName = names[0];
             }
         }
@@ -589,7 +589,7 @@ public class ExtensionLoader<T> {
     }
 
     private void loadDirectory(Map<String, Class<?>> extensionClasses, String dir) {
-        String fileName = dir + type.getName();
+        String fileName = dir + type.getName(); // 目录+类全路径 作为文件的地址
         try {
             Enumeration<java.net.URL> urls;
             ClassLoader classLoader = findClassLoader();
@@ -609,7 +609,7 @@ public class ExtensionLoader<T> {
                     type + ", description file: " + fileName + ").", t);
         }
     }
-
+    // 加载拓展配置类资源
     private void loadResource(Map<String, Class<?>> extensionClasses, ClassLoader classLoader, java.net.URL resourceURL) {
         try {
             BufferedReader reader = new BufferedReader(new InputStreamReader(resourceURL.openStream(), "utf-8"));
@@ -650,7 +650,7 @@ public class ExtensionLoader<T> {
             throw new IllegalStateException("Error when load extension class(interface: " +
                     type + ", class line: " + clazz.getName() + "), class "
                     + clazz.getName() + "is not subtype of interface.");
-        }
+        } // 过滤含有@Adaptive注解的类,并缓存
         if (clazz.isAnnotationPresent(Adaptive.class)) {
             if (cachedAdaptiveClass == null) {
                 cachedAdaptiveClass = clazz;
@@ -659,7 +659,7 @@ public class ExtensionLoader<T> {
                         + cachedAdaptiveClass.getClass().getName()
                         + ", " + clazz.getClass().getName());
             }
-        } else if (isWrapperClass(clazz)) {
+        } else if (isWrapperClass(clazz)) { // @SPI标记的类的拓展类判断
             Set<Class<?>> wrappers = cachedWrapperClasses;
             if (wrappers == null) {
                 cachedWrapperClasses = new ConcurrentHashSet<Class<?>>();
@@ -669,7 +669,7 @@ public class ExtensionLoader<T> {
         } else {
             clazz.getConstructor();
             if (name == null || name.length() == 0) {
-                name = findAnnotationName(clazz);
+                name = findAnnotationName(clazz); // 当name未指定,则需要从类上@Extension注解中标记name,未指定的话,最终会采用类名小写的方式
                 if (name.length() == 0) {
                     throw new IllegalStateException("No such extension name for the class " + clazz.getName() + " in the config " + resourceURL);
                 }
@@ -679,7 +679,7 @@ public class ExtensionLoader<T> {
                 Activate activate = clazz.getAnnotation(Activate.class);
                 if (activate != null) {
                     cachedActivates.put(names[0], activate);
-                }
+                } // 名称和SPI实现类做映射关系
                 for (String n : names) {
                     if (!cachedNames.containsKey(clazz)) {
                         cachedNames.put(clazz, n);
@@ -694,7 +694,7 @@ public class ExtensionLoader<T> {
             }
         }
     }
-
+    // 判断是否是装饰类(即通过类的构造参数类型判断)
     private boolean isWrapperClass(Class<?> clazz) {
         try {
             clazz.getConstructor(type);
