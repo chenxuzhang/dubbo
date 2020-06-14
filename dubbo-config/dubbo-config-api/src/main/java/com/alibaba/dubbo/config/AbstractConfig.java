@@ -197,23 +197,23 @@ public abstract class AbstractConfig implements Serializable {
                         key = parameter.key();
                     } else {
                         key = prop;
-                    }
+                    } // 反射执行方法,获取返回值
                     Object value = method.invoke(config);
                     String str = String.valueOf(value).trim();
                     if (value != null && str.length() > 0) {
                         if (parameter != null && parameter.escaped()) {
                             str = URL.encode(str);
-                        }
+                        } // 对方法返回值追加 append=true,使用default.{key}获取值拼接到当前值之前
                         if (parameter != null && parameter.append()) {
                             String pre = parameters.get(Constants.DEFAULT_KEY + "." + key);
                             if (pre != null && pre.length() > 0) {
                                 str = pre + "," + str;
-                            }
+                            } // 通过@Parameter注解中key指定的值再次获取值,再次拼装
                             pre = parameters.get(key);
                             if (pre != null && pre.length() > 0) {
                                 str = pre + "," + str;
                             }
-                        }
+                        } // 最终 prefix+key作为Map的key
                         if (prefix != null && prefix.length() > 0) {
                             key = prefix + "." + key;
                         }
@@ -221,7 +221,7 @@ public abstract class AbstractConfig implements Serializable {
                     } else if (parameter != null && parameter.required()) {
                         throw new IllegalStateException(config.getClass().getSimpleName() + "." + key + " == null");
                     }
-                } else if ("getParameters".equals(name)
+                } else if ("getParameters".equals(name) // 特殊处理getParameters方法
                         && Modifier.isPublic(method.getModifiers())
                         && method.getParameterTypes().length == 0
                         && method.getReturnType() == Map.class) {

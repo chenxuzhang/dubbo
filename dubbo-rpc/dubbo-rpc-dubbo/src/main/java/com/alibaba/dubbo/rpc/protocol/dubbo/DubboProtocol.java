@@ -71,7 +71,7 @@ public class DubboProtocol extends AbstractProtocol {
     //servicekey-stubmethods
     private final ConcurrentMap<String, String> stubServiceMethodsMap = new ConcurrentHashMap<String, String>();
     private ExchangeHandler requestHandler = new ExchangeHandlerAdapter() {
-
+        // TODO 调用暴露的方法
         @Override
         public Object reply(ExchangeChannel channel, Object message) throws RemotingException {
             if (message instanceof Invocation) {
@@ -227,7 +227,7 @@ public class DubboProtocol extends AbstractProtocol {
     @Override
     public <T> Exporter<T> export(Invoker<T> invoker) throws RpcException {
         URL url = invoker.getUrl();
-
+        // key的组成:[group/服务的接口路径:版本号:服务端口号] 例:test-group/com.test.springboottest.dubbo.Test:1.1.1-release:12881
         // export service.
         String key = serviceKey(url);
         DubboExporter<T> exporter = new DubboExporter<T>(invoker, key, exporterMap);
@@ -247,7 +247,7 @@ public class DubboProtocol extends AbstractProtocol {
                 stubServiceMethodsMap.put(url.getServiceKey(), stubServiceMethods);
             }
         }
-
+        // 暴露服务前,先开启服务(接收请求)
         openServer(url);
         optimizeSerialization(url);
         return exporter;
@@ -258,7 +258,7 @@ public class DubboProtocol extends AbstractProtocol {
         String key = url.getAddress();
         //client can export a service which's only for server to invoke
         boolean isServer = url.getParameter(Constants.IS_SERVER_KEY, true);
-        if (isServer) {
+        if (isServer) { // 开启服务监听
             ExchangeServer server = serverMap.get(key);
             if (server == null) {
                 serverMap.put(key, createServer(url));
@@ -268,7 +268,7 @@ public class DubboProtocol extends AbstractProtocol {
             }
         }
     }
-
+    // 开启服务,接受请求
     private ExchangeServer createServer(URL url) {
         // send readonly event when server closes, it's enabled by default
         url = url.addParameterIfAbsent(Constants.CHANNEL_READONLYEVENT_SENT_KEY, Boolean.TRUE.toString());

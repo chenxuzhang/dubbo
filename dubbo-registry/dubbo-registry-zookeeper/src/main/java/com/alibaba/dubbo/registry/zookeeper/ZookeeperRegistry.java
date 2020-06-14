@@ -60,7 +60,7 @@ public class ZookeeperRegistry extends FailbackRegistry {
         super(url);
         if (url.isAnyHost()) {
             throw new IllegalStateException("registry address == null");
-        }
+        } // 指定group默认的名称为dubbo
         String group = url.getParameter(Constants.GROUP_KEY, DEFAULT_ROOT);
         if (!group.startsWith(Constants.PATH_SEPARATOR)) {
             group = Constants.PATH_SEPARATOR + group;

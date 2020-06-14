@@ -192,16 +192,16 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
     public boolean isUnexported() {
         return unexported;
     }
-
+    // 暴露服务方法(入口)
     public synchronized void export() {
         if (provider != null) {
-            if (export == null) {
+            if (export == null) { // ProviderConfig 是否配置了export参数
                 export = provider.getExport();
             }
             if (delay == null) {
                 delay = provider.getDelay();
             }
-        }
+        } // false 表示服务不暴露。为null or 为true 接着执行
         if (export != null && !export) {
             return;
         }
@@ -366,7 +366,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         if (name == null || name.length() == 0) {
             name = "dubbo";
         }
-
+        // 组装协议相关url数据
         Map<String, String> map = new HashMap<String, String>();
         map.put(Constants.SIDE_KEY, Constants.PROVIDER_SIDE);
         map.put(Constants.DUBBO_VERSION_KEY, Version.getProtocolVersion());
@@ -468,7 +468,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         if ((contextPath == null || contextPath.length() == 0) && provider != null) {
             contextPath = provider.getContextpath();
         }
-
+        // TODO 暴露服务host?
         String host = this.findConfigedHosts(protocolConfig, registryURLs, map);
         Integer port = this.findConfigedPorts(protocolConfig, name, map);
         URL url = new URL(name, host, port, (contextPath == null || contextPath.length() == 0 ? "" : contextPath + "/") + path, map);
@@ -480,15 +480,15 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         }
 
         String scope = url.getParameter(Constants.SCOPE_KEY);
-        // don't export when none is configured
+        // don't export when none is configured 非none
         if (!Constants.SCOPE_NONE.toString().equalsIgnoreCase(scope)) {
-
+            // 暴露到本地  非remote
             // export to local if the config is not remote (export to remote only when config is remote)
             if (!Constants.SCOPE_REMOTE.toString().equalsIgnoreCase(scope)) {
                 exportLocal(url);
             }
             // export to remote if the config is not local (export to local only when config is local)
-            if (!Constants.SCOPE_LOCAL.toString().equalsIgnoreCase(scope)) {
+            if (!Constants.SCOPE_LOCAL.toString().equalsIgnoreCase(scope)) { // 非local
                 if (logger.isInfoEnabled()) {
                     logger.info("Export dubbo service " + interfaceClass.getName() + " to url " + url);
                 }
@@ -508,10 +508,10 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                         if (StringUtils.isNotEmpty(proxy)) {
                             registryURL = registryURL.addParameter(Constants.PROXY_KEY, proxy);
                         }
-
+                        // 通过代理类工厂获取Invoker 将协议url追加到registryURL的Parameter,key:export,value:url连接
                         Invoker<?> invoker = proxyFactory.getInvoker(ref, (Class) interfaceClass, registryURL.addParameterAndEncoded(Constants.EXPORT_KEY, url.toFullString()));
                         DelegateProviderMetaDataInvoker wrapperInvoker = new DelegateProviderMetaDataInvoker(invoker, this);
-
+                        // wrapperInvoker获取的protocol为registry(所以先执行RegistryProtocol),然而RegistryProtocol会通过URL获取Parameter中的export键的值(提供者的URLProtocolConfig + ProviderConfig的信息)
                         Exporter<?> exporter = protocol.export(wrapperInvoker);
                         exporters.add(exporter);
                     }

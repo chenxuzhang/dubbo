@@ -100,7 +100,7 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
 
     // callback limits
     private Integer callbacks;
-
+    // 作用域 referring/exporting情况(none、remote、local、scope)
     // the scope for referring/exporting a service, if it's local, it means searching in current JVM only.
     private String scope;
 
@@ -157,7 +157,7 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
             }
         }
     }
-
+    /** 加载注册中心配置并转换成URL */
     protected List<URL> loadRegistries(boolean provider) {
         checkRegistry();
         List<URL> registryList = new ArrayList<URL>();

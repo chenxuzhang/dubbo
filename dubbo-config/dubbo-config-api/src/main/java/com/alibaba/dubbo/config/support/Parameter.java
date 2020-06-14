@@ -29,17 +29,17 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD})
 public @interface Parameter {
-
+    /** 指定的名称。若指定此名称则使用,否则解析方法名称 */
     String key() default "";
 
     boolean required() default false;
-
+    /** 是否排除 */
     boolean excluded() default false;
-
+    /** 对文字进行编码 */
     boolean escaped() default false;
 
     boolean attribute() default false;
-
+    /** 追加字符串 */
     boolean append() default false;
 
 }

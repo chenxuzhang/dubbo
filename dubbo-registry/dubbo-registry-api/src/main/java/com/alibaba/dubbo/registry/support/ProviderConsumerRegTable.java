@@ -26,16 +26,16 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
+/**提供者、消费者注册表
  * @date 2017/11/23
  */
 public class ProviderConsumerRegTable {
     public static ConcurrentHashMap<String, Set<ProviderInvokerWrapper>> providerInvokers = new ConcurrentHashMap<String, Set<ProviderInvokerWrapper>>();
     public static ConcurrentHashMap<String, Set<ConsumerInvokerWrapper>> consumerInvokers = new ConcurrentHashMap<String, Set<ConsumerInvokerWrapper>>();
-
+    // 注册提供者Invoker
     public static void registerProvider(Invoker invoker, URL registryUrl, URL providerUrl) {
         ProviderInvokerWrapper wrapperInvoker = new ProviderInvokerWrapper(invoker, registryUrl, providerUrl);
-        String serviceUniqueName = providerUrl.getServiceKey();
+        String serviceUniqueName = providerUrl.getServiceKey(); // [分组 + 接口全路径 + 版本号]
         Set<ProviderInvokerWrapper> invokers = providerInvokers.get(serviceUniqueName);
         if (invokers == null) {
             providerInvokers.putIfAbsent(serviceUniqueName, new ConcurrentHashSet<ProviderInvokerWrapper>());

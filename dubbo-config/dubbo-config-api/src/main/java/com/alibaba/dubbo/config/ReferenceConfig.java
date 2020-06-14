@@ -353,14 +353,14 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
         } else {
             isJvmRefer = isInjvm().booleanValue();
         }
-
+        // 内部调用
         if (isJvmRefer) {
             URL url = new URL(Constants.LOCAL_PROTOCOL, NetUtils.LOCALHOST, 0, interfaceClass.getName()).addParameters(map);
             invoker = refprotocol.refer(interfaceClass, url);
             if (logger.isInfoEnabled()) {
                 logger.info("Using injvm service " + interfaceClass.getName());
             }
-        } else {
+        } else { // 指定url,根据url去调用
             if (url != null && url.length() > 0) { // user specified URL, could be peer-to-peer address, or register center's address.
                 String[] us = Constants.SEMICOLON_SPLIT_PATTERN.split(url);
                 if (us != null && us.length > 0) {
@@ -375,7 +375,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
                             urls.add(ClusterUtils.mergeUrl(url, map));
                         }
                     }
-                }
+                } // 通过注册中心配置,转换成URL
             } else { // assemble URL from register center's configuration
                 List<URL> us = loadRegistries(false);
                 if (us != null && !us.isEmpty()) {
