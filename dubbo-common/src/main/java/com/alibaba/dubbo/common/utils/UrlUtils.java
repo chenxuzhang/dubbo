@@ -352,7 +352,7 @@ public class UrlUtils {
             return categories.contains(category);
         }
     }
-
+    // 匹配消费者URL和提供者URL是否匹配(接口名、category值、enabled、group、version、classifier)
     public static boolean isMatch(URL consumerUrl, URL providerUrl) {
         String consumerInterface = consumerUrl.getServiceInterface();
         String providerInterface = providerUrl.getServiceInterface();

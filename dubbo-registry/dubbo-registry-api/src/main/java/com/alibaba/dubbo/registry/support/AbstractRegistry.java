@@ -68,8 +68,8 @@ public abstract class AbstractRegistry implements Registry {
     // Is it synchronized to save the file
     private final boolean syncSaveFile;
     private final AtomicLong lastCacheChanged = new AtomicLong();
-    private final Set<URL> registered = new ConcurrentHashSet<URL>();
-    private final ConcurrentMap<URL, Set<NotifyListener>> subscribed = new ConcurrentHashMap<URL, Set<NotifyListener>>();
+    private final Set<URL> registered = new ConcurrentHashSet<URL>(); // 所有注册的URL,删除时机为unregister方法调用
+    private final ConcurrentMap<URL, Set<NotifyListener>> subscribed = new ConcurrentHashMap<URL, Set<NotifyListener>>(); // 参与订阅的所有URL及监听处理器映射关系
     private final ConcurrentMap<URL, Map<String, List<URL>>> notified = new ConcurrentHashMap<URL, Map<String, List<URL>>>();
     private URL registryUrl;
     // Local disk cache file
@@ -114,7 +114,7 @@ public abstract class AbstractRegistry implements Registry {
         }
         this.registryUrl = url;
     }
-
+    // 参与注册的所有URL
     public Set<URL> getRegistered() {
         return registered;
     }
@@ -385,10 +385,10 @@ public abstract class AbstractRegistry implements Registry {
         }
         if (logger.isInfoEnabled()) {
             logger.info("Notify urls for subscribe url " + url + ", urls: " + urls);
-        }
+        } // 将提供者分类 结构:[{configurators -> [URLS]},{routers -> [URLS]},{providers -> [URLS]}]
         Map<String, List<URL>> result = new HashMap<String, List<URL>>();
         for (URL u : urls) {
-            if (UrlUtils.isMatch(url, u)) {
+            if (UrlUtils.isMatch(url, u)) { // 匹配消费者URL和提供者URL
                 String category = u.getParameter(Constants.CATEGORY_KEY, Constants.DEFAULT_CATEGORY);
                 List<URL> categoryList = result.get(category);
                 if (categoryList == null) {

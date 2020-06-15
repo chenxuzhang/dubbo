@@ -47,11 +47,11 @@ public class ZookeeperRegistry extends FailbackRegistry {
     private final static int DEFAULT_ZOOKEEPER_PORT = 2181;
 
     private final static String DEFAULT_ROOT = "dubbo";
-
+    // zk树装结构的根目录(可通过group指定)
     private final String root;
 
     private final Set<String> anyServices = new ConcurrentHashSet<String>();
-
+    // zk的目录监听器,用于回调
     private final ConcurrentMap<URL, ConcurrentMap<NotifyListener, ChildListener>> zkListeners = new ConcurrentHashMap<URL, ConcurrentMap<NotifyListener, ChildListener>>();
 
     private final ZookeeperClient zkClient;
@@ -67,10 +67,10 @@ public class ZookeeperRegistry extends FailbackRegistry {
         }
         this.root = group;
         zkClient = zookeeperTransporter.connect(url);
-        zkClient.addStateListener(new StateListener() {
+        zkClient.addStateListener(new StateListener() { // zk状态监听
             @Override
             public void stateChanged(int state) {
-                if (state == RECONNECTED) {
+                if (state == RECONNECTED) { // 重新连接
                     try {
                         recover();
                     } catch (Exception e) {
@@ -84,7 +84,7 @@ public class ZookeeperRegistry extends FailbackRegistry {
     static String appendDefaultPort(String address) {
         if (address != null && address.length() > 0) {
             int i = address.indexOf(':');
-            if (i < 0) {
+            if (i < 0) { // 2181 默认端口
                 return address + ":" + DEFAULT_ZOOKEEPER_PORT;
             } else if (Integer.parseInt(address.substring(i + 1)) == 0) {
                 return address.substring(0, i + 1) + DEFAULT_ZOOKEEPER_PORT;
@@ -163,9 +163,9 @@ public class ZookeeperRegistry extends FailbackRegistry {
                                 Constants.CHECK_KEY, String.valueOf(false)), listener);
                     }
                 }
-            } else {
+            } else { // urls收集从监听目录获取的url数据
                 List<URL> urls = new ArrayList<URL>();
-                for (String path : toCategoriesPath(url)) {
+                for (String path : toCategoriesPath(url)) { // toCategoriesPath(url) 需要监听的目录
                     ConcurrentMap<NotifyListener, ChildListener> listeners = zkListeners.get(url);
                     if (listeners == null) {
                         zkListeners.putIfAbsent(url, new ConcurrentHashMap<NotifyListener, ChildListener>());
@@ -180,7 +180,7 @@ public class ZookeeperRegistry extends FailbackRegistry {
                             }
                         });
                         zkListener = listeners.get(listener);
-                    }
+                    } // 创建节点,并对节点添加监听事件,当节点变动,就会触发监听回调
                     zkClient.create(path, false);
                     List<String> children = zkClient.addChildListener(path, zkListener);
                     if (children != null) {
@@ -230,18 +230,18 @@ public class ZookeeperRegistry extends FailbackRegistry {
             throw new RpcException("Failed to lookup " + url + " from zookeeper " + getUrl() + ", cause: " + e.getMessage(), e);
         }
     }
-
+    // 拼装Root路径 [root(指定的group) + /]
     private String toRootDir() {
         if (root.equals(Constants.PATH_SEPARATOR)) {
             return root;
         }
         return root + Constants.PATH_SEPARATOR;
     }
-
+    // URL中指定的 group 参数,默认 dubbo。ZookeeperRegistry构造器中指定此值
     private String toRootPath() {
         return root;
     }
-
+    // Service路径 [root(指定的group) + 接口全路径(编码后)]
     private String toServicePath(URL url) {
         String name = url.getServiceInterface();
         if (Constants.ANY_VALUE.equals(name)) {
@@ -249,7 +249,7 @@ public class ZookeeperRegistry extends FailbackRegistry {
         }
         return toRootDir() + URL.encode(name);
     }
-
+    // 组装要监听的目录。获取URL Parameter集合category 对应的value值
     private String[] toCategoriesPath(URL url) {
         String[] categories;
         if (Constants.ANY_VALUE.equals(url.getParameter(Constants.CATEGORY_KEY))) {
@@ -257,18 +257,18 @@ public class ZookeeperRegistry extends FailbackRegistry {
                     Constants.ROUTERS_CATEGORY, Constants.CONFIGURATORS_CATEGORY};
         } else {
             categories = url.getParameter(Constants.CATEGORY_KEY, new String[]{Constants.DEFAULT_CATEGORY});
-        }
+        } // 组装需要监听的url [root(指定的group) + 接口全路径 + 类型目录(需要监听的目录,例:providers、configurators、consumers、routers)]
         String[] paths = new String[categories.length];
         for (int i = 0; i < categories.length; i++) {
             paths[i] = toServicePath(url) + Constants.PATH_SEPARATOR + categories[i];
         }
         return paths;
     }
-
+    // [root(指定的group) + 接口全路径(编码后) + 类型目录(获取URL Parameter参数中,category的值。例:providers、configurators、consumers、routers)]
     private String toCategoryPath(URL url) {
         return toServicePath(url) + Constants.PATH_SEPARATOR + url.getParameter(Constants.CATEGORY_KEY, Constants.DEFAULT_CATEGORY);
     }
-
+    // 获取注册的全路径
     private String toUrlPath(URL url) {
         return toCategoryPath(url) + Constants.PATH_SEPARATOR + URL.encode(url.toFullString());
     }

@@ -272,8 +272,8 @@ public class RegistryProtocol implements Protocol {
     @Override
     @SuppressWarnings("unchecked")
     public <T> Invoker<T> refer(Class<T> type, URL url) throws RpcException {
-        url = url.setProtocol(url.getParameter(Constants.REGISTRY_KEY, Constants.DEFAULT_REGISTRY)).removeParameter(Constants.REGISTRY_KEY);
-        Registry registry = registryFactory.getRegistry(url);
+        url = url.setProtocol(url.getParameter(Constants.REGISTRY_KEY, Constants.DEFAULT_REGISTRY)).removeParameter(Constants.REGISTRY_KEY); // 替换协议头,将registry协议头替换为zookeeper、redis、...
+        Registry registry = registryFactory.getRegistry(url); // 获取注册中心处理类
         if (RegistryService.class.equals(type)) {
             return proxyFactory.getInvoker((T) registry, type, url);
         }
@@ -293,7 +293,7 @@ public class RegistryProtocol implements Protocol {
     private Cluster getMergeableCluster() {
         return ExtensionLoader.getExtensionLoader(Cluster.class).getExtension("mergeable");
     }
-
+    // 具体逻辑
     private <T> Invoker<T> doRefer(Cluster cluster, Registry registry, Class<T> type, URL url) {
         RegistryDirectory<T> directory = new RegistryDirectory<T>(type, url);
         directory.setRegistry(registry);
@@ -316,7 +316,7 @@ public class RegistryProtocol implements Protocol {
         ProviderConsumerRegTable.registerConsumer(invoker, url, subscribeUrl, directory);
         return invoker;
     }
-
+    // URL Parameter追加参数 category->consumers,check->false
     public URL getRegisteredConsumerUrl(final URL consumerUrl, URL registryUrl) {
         return consumerUrl.addParameters(CATEGORY_KEY, CONSUMERS_CATEGORY,
                 CHECK_KEY, String.valueOf(false));

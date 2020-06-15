@@ -47,15 +47,15 @@ public abstract class FailbackRegistry extends AbstractRegistry {
 
     // Timer for failure retry, regular check if there is a request for failure, and if there is, an unlimited retry
     private final ScheduledFuture<?> retryFuture;
-
+    // 执行注册失败的URL列表,用于重试
     private final Set<URL> failedRegistered = new ConcurrentHashSet<URL>();
-
+    // 执行取消注册失败的URL列表,用于重试
     private final Set<URL> failedUnregistered = new ConcurrentHashSet<URL>();
-
+    // 订阅失败URL和通知监听映射
     private final ConcurrentMap<URL, Set<NotifyListener>> failedSubscribed = new ConcurrentHashMap<URL, Set<NotifyListener>>();
-
+    // 取消订阅失败URL和通知监听映射
     private final ConcurrentMap<URL, Set<NotifyListener>> failedUnsubscribed = new ConcurrentHashMap<URL, Set<NotifyListener>>();
-
+    // 通知失败URL映射
     private final ConcurrentMap<URL, Map<NotifyListener, List<URL>>> failedNotified = new ConcurrentHashMap<URL, Map<NotifyListener, List<URL>>>();
 
     /**
@@ -253,7 +253,7 @@ public abstract class FailbackRegistry extends AbstractRegistry {
             listeners.add(listener);
         }
     }
-
+    // url   listener:   urls:监听收到的URL连接,协议头为empty,表示无事件
     @Override
     protected void notify(URL url, NotifyListener listener, List<URL> urls) {
         if (url == null) {
@@ -279,7 +279,7 @@ public abstract class FailbackRegistry extends AbstractRegistry {
     protected void doNotify(URL url, NotifyListener listener, List<URL> urls) {
         super.notify(url, listener, urls);
     }
-
+    // 重新尝试连接
     @Override
     protected void recover() throws Exception {
         // register
