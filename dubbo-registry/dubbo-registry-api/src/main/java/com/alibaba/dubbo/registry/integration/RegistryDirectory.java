@@ -87,7 +87,7 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
      * Rule two: for all providers <* ,timeout=5000>
      */
     private volatile List<Configurator> configurators; // The initial value is null and the midway may be assigned to null, please use the local variable reference
-
+    // key:服务提供者的url,value:服务提供者的Invoker
     // Map<url, Invoker> cache service url to invoker mapping.
     private volatile Map<String, Invoker<T>> urlInvokerMap; // The initial value is null and the midway may be assigned to null, please use the local variable reference
 
