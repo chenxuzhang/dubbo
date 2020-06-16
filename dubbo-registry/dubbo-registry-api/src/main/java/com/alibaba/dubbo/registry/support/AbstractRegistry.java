@@ -70,17 +70,17 @@ public abstract class AbstractRegistry implements Registry {
     private final AtomicLong lastCacheChanged = new AtomicLong();
     private final Set<URL> registered = new ConcurrentHashSet<URL>(); // 所有注册的URL,删除时机为unregister方法调用
     private final ConcurrentMap<URL, Set<NotifyListener>> subscribed = new ConcurrentHashMap<URL, Set<NotifyListener>>(); // 参与订阅的所有URL及监听处理器映射关系
-    private final ConcurrentMap<URL, Map<String, List<URL>>> notified = new ConcurrentHashMap<URL, Map<String, List<URL>>>();
+    private final ConcurrentMap<URL, Map<String, List<URL>>> notified = new ConcurrentHashMap<URL, Map<String, List<URL>>>(); // key1:监听者URL,key2:被监听的目录,value:被监听目录下的数据
     private URL registryUrl;
     // Local disk cache file
     private File file;
 
     public AbstractRegistry(URL url) {
         setUrl(url);
-        // Start file save timer
+        // Start file save timer 获取同步异步刷新配置
         syncSaveFile = url.getParameter(Constants.REGISTRY_FILESAVE_SYNC_KEY, false);
         String filename = url.getParameter(Constants.FILE_KEY, System.getProperty("user.home") + "/.dubbo/dubbo-registry-" + url.getParameter(Constants.APPLICATION_KEY) + "-" + url.getAddress() + ".cache");
-        File file = null;
+        File file = null; // 设置数据储存的文件目录+名称
         if (ConfigUtils.isNotEmpty(filename)) {
             file = new File(filename);
             if (!file.exists() && file.getParentFile() != null && !file.getParentFile().exists()) {
@@ -90,8 +90,8 @@ public abstract class AbstractRegistry implements Registry {
             }
         }
         this.file = file;
-        loadProperties();
-        notify(url.getBackupUrls());
+        loadProperties(); // 将磁盘文件数据刷新至Properties
+        notify(url.getBackupUrls()); /** TODO */
     }
 
     protected static List<URL> filterEmpty(URL url, List<URL> urls) {
@@ -189,7 +189,7 @@ public abstract class AbstractRegistry implements Registry {
             logger.warn("Failed to save registry store file, cause: " + e.getMessage(), e);
         }
     }
-
+    // 将本地的磁盘文件刷新至Properties
     private void loadProperties() {
         if (file != null && file.exists()) {
             InputStream in = null;
@@ -385,10 +385,10 @@ public abstract class AbstractRegistry implements Registry {
         }
         if (logger.isInfoEnabled()) {
             logger.info("Notify urls for subscribe url " + url + ", urls: " + urls);
-        } // 将提供者分类 结构:[{configurators -> [URLS]},{routers -> [URLS]},{providers -> [URLS]}]
+        } // 将提供者URL分类 结构: key:被监听的目录,value:目录下的数据  [{configurators -> [URLS]},{routers -> [URLS]},{providers -> [URLS]}]
         Map<String, List<URL>> result = new HashMap<String, List<URL>>();
-        for (URL u : urls) {
-            if (UrlUtils.isMatch(url, u)) { // 匹配消费者URL和提供者URL
+        for (URL u : urls) { // 匹配消费者URL和提供者URL
+            if (UrlUtils.isMatch(url, u)) {
                 String category = u.getParameter(Constants.CATEGORY_KEY, Constants.DEFAULT_CATEGORY);
                 List<URL> categoryList = result.get(category);
                 if (categoryList == null) {
@@ -405,13 +405,13 @@ public abstract class AbstractRegistry implements Registry {
         if (categoryNotified == null) {
             notified.putIfAbsent(url, new ConcurrentHashMap<String, List<URL>>());
             categoryNotified = notified.get(url);
-        }
+        } // 循环遍历提供者的URL数据(格式化好的)
         for (Map.Entry<String, List<URL>> entry : result.entrySet()) {
             String category = entry.getKey();
             List<URL> categoryList = entry.getValue();
-            categoryNotified.put(category, categoryList);
-            saveProperties(url);
-            listener.notify(categoryList);
+            categoryNotified.put(category, categoryList); // 更新notified数据,使其保持最新的URL
+            saveProperties(url); // 将最新的URL数据刷新至磁盘
+            listener.notify(categoryList); // 回调NotifyListener的notify方法,刷新本地的Invoker
         }
     }
 
@@ -422,10 +422,10 @@ public abstract class AbstractRegistry implements Registry {
 
         try {
             StringBuilder buf = new StringBuilder();
-            Map<String, List<URL>> categoryNotified = notified.get(url);
+            Map<String, List<URL>> categoryNotified = notified.get(url); // 通过监听者url获取被监听的数据(消费者情况下,监听者为消费者。被监听数据为提供者url)
             if (categoryNotified != null) {
                 for (List<URL> us : categoryNotified.values()) {
-                    for (URL u : us) {
+                    for (URL u : us) { // 拼装URL,用分隔符分开
                         if (buf.length() > 0) {
                             buf.append(URL_SEPARATOR);
                         }
@@ -433,10 +433,10 @@ public abstract class AbstractRegistry implements Registry {
                     }
                 }
             }
-            properties.setProperty(url.getServiceKey(), buf.toString());
+            properties.setProperty(url.getServiceKey(), buf.toString()); // 存储到Properties中
             long version = lastCacheChanged.incrementAndGet();
-            if (syncSaveFile) {
-                doSaveProperties(version);
+            if (syncSaveFile) { // 同步异步,使用自增版本号控制刷新到磁盘的顺序性
+                doSaveProperties(version); // 同步操作过程失败也会丢进registryCacheExecutor线程池
             } else {
                 registryCacheExecutor.execute(new SaveProperties(version));
             }

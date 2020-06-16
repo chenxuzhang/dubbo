@@ -253,7 +253,7 @@ public abstract class FailbackRegistry extends AbstractRegistry {
             listeners.add(listener);
         }
     }
-    // url   listener:   urls:监听收到的URL连接,协议头为empty,表示无事件
+    // listener:通知监听,urls:收到注册中心的URL连接,协议头为empty,表示空的
     @Override
     protected void notify(URL url, NotifyListener listener, List<URL> urls) {
         if (url == null) {

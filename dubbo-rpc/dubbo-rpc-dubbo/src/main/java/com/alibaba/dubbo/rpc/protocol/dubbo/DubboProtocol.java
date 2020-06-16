@@ -329,7 +329,7 @@ public class DubboProtocol extends AbstractProtocol {
             throw new RpcException("Cannot instantiate the serialization optimizer class: " + className, e);
         }
     }
-
+    // url:合并后的URL
     @Override
     public <T> Invoker<T> refer(Class<T> serviceType, URL url) throws RpcException {
         optimizeSerialization(url);
@@ -338,7 +338,7 @@ public class DubboProtocol extends AbstractProtocol {
         invokers.add(invoker);
         return invoker;
     }
-
+    // 获取请求Clients
     private ExchangeClient[] getClients(URL url) {
         // whether to share connection
         boolean service_share_connect = false;
@@ -361,7 +361,7 @@ public class DubboProtocol extends AbstractProtocol {
     }
 
     /**
-     * Get shared connection
+     * Get shared connection 共享客户端
      */
     private ExchangeClient getSharedClient(URL url) {
         String key = url.getAddress();
@@ -391,15 +391,15 @@ public class DubboProtocol extends AbstractProtocol {
     }
 
     /**
-     * Create new connection
+     * Create new connection 创建连接
      */
     private ExchangeClient initClient(URL url) {
 
-        // client type setting.
+        // client type setting. 客户端类型,默认netty
         String str = url.getParameter(Constants.CLIENT_KEY, url.getParameter(Constants.SERVER_KEY, Constants.DEFAULT_REMOTING_CLIENT));
-
+        // 协议类型,默认dubbo协议
         url = url.addParameter(Constants.CODEC_KEY, DubboCodec.NAME);
-        // enable heartbeat by default
+        // enable heartbeat by default 心跳时间
         url = url.addParameterIfAbsent(Constants.HEARTBEAT_KEY, String.valueOf(Constants.DEFAULT_HEARTBEAT));
 
         // BIO is not allowed since it has severe performance issue.
