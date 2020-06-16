@@ -174,7 +174,7 @@ public class ZookeeperRegistry extends FailbackRegistry {
                     ChildListener zkListener = listeners.get(listener);
                     if (zkListener == null) {
                         listeners.putIfAbsent(listener, new ChildListener() {
-                            @Override
+                            @Override  // notify执行逻辑:写入磁盘后,最终会通知listeneer实现类
                             public void childChanged(String parentPath, List<String> currentChilds) {
                                 ZookeeperRegistry.this.notify(url, listener, toUrlsWithEmpty(url, parentPath, currentChilds));
                             }
@@ -186,7 +186,7 @@ public class ZookeeperRegistry extends FailbackRegistry {
                     if (children != null) {
                         urls.addAll(toUrlsWithEmpty(url, path, children));
                     }
-                }
+                } // notify执行逻辑:写入磁盘后,最终会通知listeneer实现类
                 notify(url, listener, urls);
             }
         } catch (Throwable e) {
