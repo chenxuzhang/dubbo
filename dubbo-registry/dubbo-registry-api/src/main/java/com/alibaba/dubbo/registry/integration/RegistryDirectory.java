@@ -93,7 +93,7 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
 
     // Map<methodName, Invoker> cache service method to invokers mapping.
     private volatile Map<String, List<Invoker<T>>> methodInvokerMap; // The initial value is null and the midway may be assigned to null, please use the local variable reference
-
+    // 服务提供者的URL缓存信息
     // Set<invokerUrls> cache invokeUrls to invokers mapping.
     private volatile Set<URL> cachedInvokerUrls; // The initial value is null and the midway may be assigned to null, please use the local variable reference
     // TODO 一个RegistryDirectory对应的是一个ServiceType类
@@ -241,7 +241,7 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
      * 2.If the incoming invoker list is not empty, it means that it is the latest invoker list
      * 3.If the list of incoming invokerUrl is empty, It means that the rule is only a override rule or a route rule, which needs to be re-contrasted to decide whether to re-reference.
      *
-     * @param invokerUrls 被监听目录下的URL数据
+     * @param invokerUrls 被监听目录下的URL数据(所有服务提供者关闭,传入的集合只会有一条,且协议头为empty)
      */
     // TODO: 2017/8/31 FIXME The thread pool should be used to refresh the address, otherwise the task may be accumulated.
     private void refreshInvoker(List<URL> invokerUrls) {
@@ -253,9 +253,9 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
         } else {
             this.forbidden = false; // Allow to access
             Map<String, Invoker<T>> oldUrlInvokerMap = this.urlInvokerMap; // local reference // key:服务提供者的url,value:由提供者URL + 消费者URL + Invoker调用器
-            if (invokerUrls.isEmpty() && this.cachedInvokerUrls != null) { // cachedInvokerUrls 提供者URL缓存
-                invokerUrls.addAll(this.cachedInvokerUrls);
-            } else {
+            if (invokerUrls.isEmpty() && this.cachedInvokerUrls != null) {
+                invokerUrls.addAll(this.cachedInvokerUrls); // invokerUrls肯定会有值,此处进行错误参数传入拦截
+            } else { // 服务提供者URLS数据进行缓存
                 this.cachedInvokerUrls = new HashSet<URL>();
                 this.cachedInvokerUrls.addAll(invokerUrls);//Cached invoker urls, convenient for comparison
             }
@@ -370,7 +370,7 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
                 }
             }
             if (Constants.EMPTY_PROTOCOL.equals(providerUrl.getProtocol())) {
-                continue;
+                continue; // 过滤协议头为empty的URL
             }
             if (!ExtensionLoader.getExtensionLoader(Protocol.class).hasExtension(providerUrl.getProtocol())) {
                 logger.error(new IllegalStateException("Unsupported protocol " + providerUrl.getProtocol() + " in notified url: " + providerUrl + " from registry " + getUrl().getAddress() + " to consumer " + NetUtils.getLocalHost()
@@ -519,7 +519,7 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
     }
 
     /**
-     * Close all invokers
+     * Close all invokers 关闭所有Invoker 调用Invoker.destroy方法,清空urlInvokerMap、methodInvokerMap
      */
     private void destroyAllInvokers() {
         Map<String, Invoker<T>> localUrlInvokerMap = this.urlInvokerMap; // local reference
