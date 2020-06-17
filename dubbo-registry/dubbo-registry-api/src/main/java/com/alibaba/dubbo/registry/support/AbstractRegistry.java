@@ -370,7 +370,7 @@ public abstract class AbstractRegistry implements Registry {
             }
         }
     }
-
+    // urls从注册中心返回的
     protected void notify(URL url, NotifyListener listener, List<URL> urls) {
         if (url == null) {
             throw new IllegalArgumentException("notify url == null");
@@ -414,7 +414,7 @@ public abstract class AbstractRegistry implements Registry {
             listener.notify(categoryList); // 回调NotifyListener的notify方法,刷新本地的Invoker
         }
     }
-
+    // 将notified的url存入磁盘(通过Properties),写入磁盘 同步、异步 两种方式
     private void saveProperties(URL url) {
         if (file == null) {
             return;
