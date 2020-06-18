@@ -60,18 +60,18 @@ import java.util.Set;
 public class RegistryDirectory<T> extends AbstractDirectory<T> implements NotifyListener {
 
     private static final Logger logger = LoggerFactory.getLogger(RegistryDirectory.class);
-
+    // 集群
     private static final Cluster cluster = ExtensionLoader.getExtensionLoader(Cluster.class).getAdaptiveExtension();
-
+    // 路由工厂
     private static final RouterFactory routerFactory = ExtensionLoader.getExtensionLoader(RouterFactory.class).getAdaptiveExtension();
-
+    // 配置工厂
     private static final ConfiguratorFactory configuratorFactory = ExtensionLoader.getExtensionLoader(ConfiguratorFactory.class).getAdaptiveExtension();
     private final String serviceKey; // Initialization at construction time, assertion not null
     private final Class<T> serviceType; // Initialization at construction time, assertion not null
     private final Map<String, String> queryMap; // Initialization at construction time, assertion not null
     private final URL directoryUrl; // Initialization at construction time, assertion not null, and always assign non null value
     private final String[] serviceMethods;
-    private final boolean multiGroup;
+    private final boolean multiGroup; // 多分组
     private Protocol protocol; // Initialization at the time of injection, the assertion is not null
     private Registry registry; // Initialization at the time of injection, the assertion is not null
     private volatile boolean forbidden = false; // 是否禁止,false:允许访问,true:禁止访问
@@ -87,11 +87,11 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
      * Rule two: for all providers <* ,timeout=5000>
      */
     private volatile List<Configurator> configurators; // The initial value is null and the midway may be assigned to null, please use the local variable reference
-    // key:服务提供者的url,value:服务提供者的Invoker
+    // key:服务提供者的url,value:服务提供者的Invoker(由提供者URL + 消费者URL + Invoker调用器)
     // Map<url, Invoker> cache service url to invoker mapping.
     private volatile Map<String, Invoker<T>> urlInvokerMap; // The initial value is null and the midway may be assigned to null, please use the local variable reference
 
-    // Map<methodName, Invoker> cache service method to invokers mapping.
+    // 服务中,相同的服务类中相同的方法和Invoker(服务类)的映射关系
     private volatile Map<String, List<Invoker<T>>> methodInvokerMap; // The initial value is null and the midway may be assigned to null, please use the local variable reference
     // 服务提供者的URL缓存信息
     // Set<invokerUrls> cache invokeUrls to invokers mapping.
@@ -252,7 +252,7 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
             destroyAllInvokers(); // Close all invokers
         } else {
             this.forbidden = false; // Allow to access
-            Map<String, Invoker<T>> oldUrlInvokerMap = this.urlInvokerMap; // local reference // key:服务提供者的url,value:由提供者URL + 消费者URL + Invoker调用器
+            Map<String, Invoker<T>> oldUrlInvokerMap = this.urlInvokerMap; // local reference
             if (invokerUrls.isEmpty() && this.cachedInvokerUrls != null) {
                 invokerUrls.addAll(this.cachedInvokerUrls); // invokerUrls肯定会有值,此处进行错误参数传入拦截
             } else { // 服务提供者URLS数据进行缓存
@@ -262,8 +262,8 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
             if (invokerUrls.isEmpty()) {
                 return;
             } // toInvokers:将监听目录下的URL转换成Invoker。toMethodInvokers:将提供者方法和Invoker进行映射
-            Map<String, Invoker<T>> newUrlInvokerMap = toInvokers(invokerUrls);// Translate url list to Invoker map
-            Map<String, List<Invoker<T>>> newMethodInvokerMap = toMethodInvokers(newUrlInvokerMap); // Change method name to map Invoker Map
+            Map<String, Invoker<T>> newUrlInvokerMap = toInvokers(invokerUrls);// URL和Invoker的映射关系(一个Invoker对应一个服务类)
+            Map<String, List<Invoker<T>>> newMethodInvokerMap = toMethodInvokers(newUrlInvokerMap); // 方法和Invoker的映射关系(一个Invoker对应一个服务类)
             // state change
             // If the calculation is wrong, it is not processed.
             if (newUrlInvokerMap == null || newUrlInvokerMap.size() == 0) {
@@ -286,7 +286,7 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
             String method = entry.getKey();
             List<Invoker<T>> invokers = entry.getValue();
             Map<String, List<Invoker<T>>> groupMap = new HashMap<String, List<Invoker<T>>>();
-            for (Invoker<T> invoker : invokers) {
+            for (Invoker<T> invoker : invokers) { // 分组名-->Invoker映射关系
                 String group = invoker.getUrl().getParameter(Constants.GROUP_KEY, "");
                 List<Invoker<T>> groupInvokers = groupMap.get(group);
                 if (groupInvokers == null) {
@@ -377,11 +377,11 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
                         + ", supported protocol: " + ExtensionLoader.getExtensionLoader(Protocol.class).getSupportedExtensions()));
                 continue;
             } // URL合并
-            URL url = mergeUrl(providerUrl);
+            URL url = mergeUrl(providerUrl); // 合并URL(将服务端和消费端一些参数合并)
 
             String key = url.toFullString(); // The parameter urls are sorted
             if (keys.contains(key)) { // Repeated url
-                continue;
+                continue; // 去重过滤
             }
             keys.add(key);
             // Cache key is url that does not merge with consumer side parameters, regardless of how the consumer combines parameters, if the server url changes, then refer again
@@ -390,12 +390,12 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
             if (invoker == null) { // 不在缓存中，请再次引用。消费者服务重启、提供者服务重启、新增服务提供者 都有可能引起缓存未命中(url含有注册时候的时间戳)
                 try {
                     boolean enabled = true;
-                    if (url.hasParameter(Constants.DISABLED_KEY)) {
+                    if (url.hasParameter(Constants.DISABLED_KEY)) { // disabled 是否关闭(true:关闭,false:开启)
                         enabled = !url.getParameter(Constants.DISABLED_KEY, false);
-                    } else {
+                    } else { // 获取enabled 是否开启,默认开启
                         enabled = url.getParameter(Constants.ENABLED_KEY, true);
-                    }
-                    if (enabled) {
+                    } // 开启状态。通过protocol进行获取服务的引用(Invoker)。通过url(服务的提供者)的协议头,获取对应的protocol协议处理器(DubboProtocol、RedisProtocol、...)
+                    if (enabled) { // 将获取的Invoker(DubboInvoker、...)委托给InvokerDelegate(包装类)进行管理
                         invoker = new InvokerDelegate<T>(protocol.refer(serviceType, url), url, providerUrl);
                     }
                 } catch (Throwable t) {
@@ -583,7 +583,7 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
 
     @Override
     public List<Invoker<T>> doList(Invocation invocation) {
-        if (forbidden) {
+        if (forbidden) { // 禁用标记
             // 1. No service provider 2. Service providers are disabled
             throw new RpcException(RpcException.FORBIDDEN_EXCEPTION,
                 "No provider available from registry " + getUrl().getAddress() + " for service " + getConsumerUrl().getServiceKey() + " on consumer " +  NetUtils.getLocalHost()
