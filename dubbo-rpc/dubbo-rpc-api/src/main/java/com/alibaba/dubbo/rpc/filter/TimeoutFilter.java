@@ -27,8 +27,8 @@ import com.alibaba.dubbo.rpc.Result;
 import com.alibaba.dubbo.rpc.RpcException;
 
 import java.util.Arrays;
-
 /**
+ * 超时警告日志打印。可用于服务的提供者端
  * Log any invocation timeout, but don't stop server from running
  */
 @Activate(group = Constants.PROVIDER)

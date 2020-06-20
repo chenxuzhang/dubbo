@@ -30,7 +30,7 @@ import com.alibaba.dubbo.rpc.RpcException;
 import java.util.List;
 
 /**
- * ListenerProtocol
+ * 构建Filter拦截器链
  */
 public class ProtocolFilterWrapper implements Protocol {
 
@@ -42,21 +42,21 @@ public class ProtocolFilterWrapper implements Protocol {
         }
         this.protocol = protocol;
     }
-
+    // TODO 构建Filter拦截器链,拦截器拓展点
     private static <T> Invoker<T> buildInvokerChain(final Invoker<T> invoker, String key, String group) {
-        Invoker<T> last = invoker;
+        Invoker<T> last = invoker; // SPI获取Filter实现类集。默认返回结果为升序排列,如果自己指定了过滤器配置,顺序则有可能会发生变化
         List<Filter> filters = ExtensionLoader.getExtensionLoader(Filter.class).getActivateExtension(invoker.getUrl(), key, group);
         if (!filters.isEmpty()) {
-            for (int i = filters.size() - 1; i >= 0; i--) {
+            for (int i = filters.size() - 1; i >= 0; i--) { // 从后往前遍历,构建过滤器链。执行的时候,拦截器链从前往后执行
                 final Filter filter = filters.get(i);
                 final Invoker<T> next = last;
                 last = new Invoker<T>() {
-
+                    // 将对Filter的调用,封装为Invoker实例,组建拦截器调用链,调用最后一环为具体协议对应的Invoker 例:Filter_A-->Filter_B-->Filter_C-->DubboInvoker
                     @Override
                     public Class<T> getInterface() {
                         return invoker.getInterface();
                     }
-
+                    //
                     @Override
                     public URL getUrl() {
                         return invoker.getUrl();
@@ -66,7 +66,7 @@ public class ProtocolFilterWrapper implements Protocol {
                     public boolean isAvailable() {
                         return invoker.isAvailable();
                     }
-
+                    // 将前一个Invoker交给当前
                     @Override
                     public Result invoke(Invocation invocation) throws RpcException {
                         return filter.invoke(next, invocation);
@@ -96,7 +96,7 @@ public class ProtocolFilterWrapper implements Protocol {
     public <T> Exporter<T> export(Invoker<T> invoker) throws RpcException {
         if (Constants.REGISTRY_PROTOCOL.equals(invoker.getUrl().getProtocol())) {
             return protocol.export(invoker);
-        }
+        } // buildInvokerChain 构建过滤器链
         return protocol.export(buildInvokerChain(invoker, Constants.SERVICE_FILTER_KEY, Constants.PROVIDER));
     }
 
@@ -104,7 +104,7 @@ public class ProtocolFilterWrapper implements Protocol {
     public <T> Invoker<T> refer(Class<T> type, URL url) throws RpcException {
         if (Constants.REGISTRY_PROTOCOL.equals(url.getProtocol())) {
             return protocol.refer(type, url);
-        }
+        } // buildInvokerChain 构建过滤器链
         return buildInvokerChain(protocol.refer(type, url), Constants.REFERENCE_FILTER_KEY, Constants.CONSUMER);
     }
 

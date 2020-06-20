@@ -27,8 +27,8 @@ import com.alibaba.dubbo.rpc.RpcException;
 import com.alibaba.dubbo.rpc.RpcStatus;
 
 import java.util.concurrent.Semaphore;
-
 /**
+ * 服务提供者每服务每方法最大可并行执行请求数。在服务提供者端使用
  * ThreadLimitInvokerFilter
  */
 @Activate(group = Constants.PROVIDER, value = Constants.EXECUTES_KEY)
@@ -40,14 +40,14 @@ public class ExecuteLimitFilter implements Filter {
         String methodName = invocation.getMethodName();
         Semaphore executesLimit = null;
         boolean acquireResult = false;
-        int max = url.getMethodParameter(methodName, Constants.EXECUTES_KEY, 0);
+        int max = url.getMethodParameter(methodName, Constants.EXECUTES_KEY, 0); // 设置最高并发数,可针对服务配置,也可针对服务的方法进行单独配置
         if (max > 0) {
             RpcStatus count = RpcStatus.getStatus(url, invocation.getMethodName());
-//            if (count.getActive() >= max) {
+//            if (count.getActive() >= max) { // 使用此比较会有并发情况发生,并发两次请求比较结果都是true,以至于RpcStatus.beginCount 操作会大于限制的并发数
             /**
              * http://manzhizhen.iteye.com/blog/2386408
              * use semaphore for concurrency control (to limit thread number)
-             */
+             */ // 基于信号量,限制最多有max个请求,超过max个请求,将会抛异常
             executesLimit = count.getSemaphore(max);
             if(executesLimit != null && !(acquireResult = executesLimit.tryAcquire())) {
                 throw new RpcException("Failed to invoke method " + invocation.getMethodName() + " in provider " + url + ", cause: The service using threads greater than <dubbo:service executes=\"" + max + "\" /> limited.");

@@ -42,8 +42,8 @@ import com.alibaba.dubbo.rpc.support.ProtocolUtils;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
-
 /**
+ * 泛化 只能用于提供者端
  * GenericInvokerFilter.
  */
 @Activate(group = Constants.PROVIDER, order = -20000)

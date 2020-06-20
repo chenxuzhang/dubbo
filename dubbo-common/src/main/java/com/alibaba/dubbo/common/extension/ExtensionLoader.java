@@ -184,29 +184,29 @@ public class ExtensionLoader<T> {
     public List<T> getActivateExtension(URL url, String[] values, String group) {
         List<T> exts = new ArrayList<T>();
         List<String> names = values == null ? new ArrayList<String>(0) : Arrays.asList(values);
-        if (!names.contains(Constants.REMOVE_VALUE_PREFIX + Constants.DEFAULT_KEY)) {
-            getExtensionClasses();
+        if (!names.contains(Constants.REMOVE_VALUE_PREFIX + Constants.DEFAULT_KEY)) { // -default:禁用全部默认的
+            getExtensionClasses(); // 扫描目录下的文件
             for (Map.Entry<String, Activate> entry : cachedActivates.entrySet()) {
                 String name = entry.getKey();
                 Activate activate = entry.getValue();
-                if (isMatchGroup(group, activate.group())) {
+                if (isMatchGroup(group, activate.group())) { // 比较@Activate注解的group参数值,注解未指定group或group匹配,都可以使用
                     T ext = getExtension(name);
-                    if (!names.contains(name)
+                    if (!names.contains(name) // 排除指定的names,稍后会在下面进行加载。
                             && !names.contains(Constants.REMOVE_VALUE_PREFIX + name)
-                            && isActive(activate, url)) {
+                            && isActive(activate, url)) { // true:@Activate未指定value or URL的Parameters中的key有和@Activate的value值相同的情况且value值不为空
                         exts.add(ext);
                     }
                 }
             }
             Collections.sort(exts, ActivateComparator.COMPARATOR);
-        }
+        } // 以下逻辑如果触发,过滤器的顺序有可能被打乱(插入已有集合之前【需要排序,不需要排序】、插入已有集合之后【需要排序,不需要排序】)
         List<T> usrs = new ArrayList<T>();
-        for (int i = 0; i < names.size(); i++) {
+        for (int i = 0; i < names.size(); i++) { // 将指定的names遍历,加载
             String name = names.get(i);
-            if (!name.startsWith(Constants.REMOVE_VALUE_PREFIX)
-                    && !names.contains(Constants.REMOVE_VALUE_PREFIX + name)) {
-                if (Constants.DEFAULT_KEY.equals(name)) {
-                    if (!usrs.isEmpty()) {
+            if (!name.startsWith(Constants.REMOVE_VALUE_PREFIX) // -:表示禁用
+                    && !names.contains(Constants.REMOVE_VALUE_PREFIX + name)) { // -{name}:表示禁用
+                if (Constants.DEFAULT_KEY.equals(name)) { // default
+                    if (!usrs.isEmpty()) { // 设置default后,会将usrs中的实例插入到exts最前,当做默认处理
                         exts.addAll(0, usrs);
                         usrs.clear();
                     }
@@ -235,7 +235,7 @@ public class ExtensionLoader<T> {
         }
         return false;
     }
-
+    // @Activate 未指定value值 or 指定value值,且URL的Parameters中含有value值的映射数据
     private boolean isActive(Activate activate, URL url) {
         String[] keys = activate.value();
         if (keys.length == 0) {
@@ -623,7 +623,7 @@ public class ExtensionLoader<T> {
                         try {
                             String name = null;
                             int i = line.indexOf('=');
-                            if (i > 0) {
+                            if (i > 0) { // 通过=号分隔一行数据,并取name和value(实现类全路径)
                                 name = line.substring(0, i).trim();
                                 line = line.substring(i + 1).trim();
                             }
@@ -677,7 +677,7 @@ public class ExtensionLoader<T> {
             String[] names = NAME_SEPARATOR.split(name);
             if (names != null && names.length > 0) {
                 Activate activate = clazz.getAnnotation(Activate.class);
-                if (activate != null) {
+                if (activate != null) { // 含有@Activate注解的类缓存
                     cachedActivates.put(names[0], activate);
                 } // 名称和SPI实现类做映射关系
                 for (String n : names) {

@@ -25,7 +25,7 @@ import com.alibaba.dubbo.rpc.Invoker;
 import java.util.List;
 
 /**
- * ListenerExporter
+ * 暴露服务的监听器
  */
 public class ListenerExporterWrapper<T> implements Exporter<T> {
 
@@ -34,7 +34,7 @@ public class ListenerExporterWrapper<T> implements Exporter<T> {
     private final Exporter<T> exporter;
 
     private final List<ExporterListener> listeners;
-
+    // 暴露服务之前,执行监听器回调
     public ListenerExporterWrapper(Exporter<T> exporter, List<ExporterListener> listeners) {
         if (exporter == null) {
             throw new IllegalArgumentException("exporter == null");
@@ -63,7 +63,7 @@ public class ListenerExporterWrapper<T> implements Exporter<T> {
     public Invoker<T> getInvoker() {
         return exporter.getInvoker();
     }
-
+    // 取消暴露之后,执行监听器回调
     @Override
     public void unexport() {
         try {

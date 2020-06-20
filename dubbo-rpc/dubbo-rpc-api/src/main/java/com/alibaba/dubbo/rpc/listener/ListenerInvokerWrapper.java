@@ -37,7 +37,7 @@ public class ListenerInvokerWrapper<T> implements Invoker<T> {
     private final Invoker<T> invoker;
 
     private final List<InvokerListener> listeners;
-
+    // 返回服务引用之前,执行监听器回调
     public ListenerInvokerWrapper(Invoker<T> invoker, List<InvokerListener> listeners) {
         if (invoker == null) {
             throw new IllegalArgumentException("invoker == null");
@@ -81,7 +81,7 @@ public class ListenerInvokerWrapper<T> implements Invoker<T> {
     public String toString() {
         return getInterface() + " -> " + (getUrl() == null ? " " : getUrl().toString());
     }
-
+    // 取消服务引用之后,执行监听器回调
     @Override
     public void destroy() {
         try {

@@ -33,19 +33,19 @@ import java.util.concurrent.atomic.AtomicLong;
  * @see com.alibaba.dubbo.rpc.cluster.loadbalance.LeastActiveLoadBalance
  */
 public class RpcStatus {
-
+    // Service对应的RpcStatus 映射关系 key:url.tostring,value:RpcStatus
     private static final ConcurrentMap<String, RpcStatus> SERVICE_STATISTICS = new ConcurrentHashMap<String, RpcStatus>();
-
+    // 服务对应的每个方法的RpcStatus映射关系 key1:url.tostring,key2:methodName,value:RpcStatus
     private static final ConcurrentMap<String, ConcurrentMap<String, RpcStatus>> METHOD_STATISTICS = new ConcurrentHashMap<String, ConcurrentMap<String, RpcStatus>>();
     private final ConcurrentMap<String, Object> values = new ConcurrentHashMap<String, Object>();
-    private final AtomicInteger active = new AtomicInteger();
-    private final AtomicLong total = new AtomicLong();
-    private final AtomicInteger failed = new AtomicInteger();
-    private final AtomicLong totalElapsed = new AtomicLong();
-    private final AtomicLong failedElapsed = new AtomicLong();
-    private final AtomicLong maxElapsed = new AtomicLong();
-    private final AtomicLong failedMaxElapsed = new AtomicLong();
-    private final AtomicLong succeededMaxElapsed = new AtomicLong();
+    private final AtomicInteger active = new AtomicInteger(); // 活跃数量
+    private final AtomicLong total = new AtomicLong(); // 服务调用的次数
+    private final AtomicInteger failed = new AtomicInteger(); // 执行失败次数
+    private final AtomicLong totalElapsed = new AtomicLong(); // 服务执行的时间总消耗(成功 + 失败)
+    private final AtomicLong failedElapsed = new AtomicLong(); // 服务执行失败的时间总消耗
+    private final AtomicLong maxElapsed = new AtomicLong(); // 记录服务单次最大的时间消耗
+    private final AtomicLong failedMaxElapsed = new AtomicLong(); // 记录服务执行失败单次最大的时间消耗
+    private final AtomicLong succeededMaxElapsed = new AtomicLong(); // 记录服务执行成功单次最大的时间消耗
 
     /**
      * Semaphore used to control concurrency limit set by `executes`
@@ -113,8 +113,8 @@ public class RpcStatus {
      * @param url
      */
     public static void beginCount(URL url, String methodName) {
-        beginCount(getStatus(url));
-        beginCount(getStatus(url, methodName));
+        beginCount(getStatus(url)); // 获取Service对应的RpcStatus,并且active激活数加一
+        beginCount(getStatus(url, methodName)); // 获取Method对应的RpcStatus,并且active激活数加一
     }
 
     private static void beginCount(RpcStatus status) {
@@ -123,8 +123,8 @@ public class RpcStatus {
 
     /**
      * @param url
-     * @param elapsed
-     * @param succeeded
+     * @param elapsed 消耗的时间
+     * @param succeeded 成功或失败
      */
     public static void endCount(URL url, String methodName, long elapsed, boolean succeeded) {
         endCount(getStatus(url), elapsed, succeeded);
@@ -132,21 +132,21 @@ public class RpcStatus {
     }
 
     private static void endCount(RpcStatus status, long elapsed, boolean succeeded) {
-        status.active.decrementAndGet();
-        status.total.incrementAndGet();
-        status.totalElapsed.addAndGet(elapsed);
+        status.active.decrementAndGet(); // 活跃量减一
+        status.total.incrementAndGet(); // 服务调用的次数
+        status.totalElapsed.addAndGet(elapsed); // 服务执行的时间总消耗(成功 + 失败)
         if (status.maxElapsed.get() < elapsed) {
-            status.maxElapsed.set(elapsed);
+            status.maxElapsed.set(elapsed); // 记录服务单次最大的时间消耗
         }
         if (succeeded) {
             if (status.succeededMaxElapsed.get() < elapsed) {
-                status.succeededMaxElapsed.set(elapsed);
+                status.succeededMaxElapsed.set(elapsed); // 记录服务执行成功单次最大的时间消耗
             }
         } else {
-            status.failed.incrementAndGet();
-            status.failedElapsed.addAndGet(elapsed);
+            status.failed.incrementAndGet(); // 执行失败次数递增
+            status.failedElapsed.addAndGet(elapsed); // 服务执行失败的时间总消耗
             if (status.failedMaxElapsed.get() < elapsed) {
-                status.failedMaxElapsed.set(elapsed);
+                status.failedMaxElapsed.set(elapsed); // 记录服务执行失败单次最大的时间消耗
             }
         }
     }

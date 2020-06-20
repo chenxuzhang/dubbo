@@ -36,8 +36,8 @@ import com.alibaba.dubbo.rpc.support.RpcUtils;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
-
 /**
+ * 监控
  * MonitorFilter. (SPI, Singleton, ThreadSafe)
  */
 @Activate(group = {Constants.PROVIDER, Constants.CONSUMER})

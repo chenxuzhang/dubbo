@@ -38,8 +38,8 @@ import com.alibaba.dubbo.rpc.support.ProtocolUtils;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-
 /**
+ * 泛化 只能用于消费者端
  * GenericImplInvokerFilter
  */
 @Activate(group = Constants.CONSUMER, value = Constants.GENERIC_KEY, order = 20000)

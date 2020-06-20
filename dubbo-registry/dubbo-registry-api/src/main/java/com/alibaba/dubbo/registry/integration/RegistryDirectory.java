@@ -261,7 +261,7 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
             }
             if (invokerUrls.isEmpty()) {
                 return;
-            } // toInvokers:将监听目录下的URL转换成Invoker。toMethodInvokers:将提供者方法和Invoker进行映射
+            } // toInvokers:将监听的providers目录下的URL转换成Invoker。toMethodInvokers:将提供者方法和Invoker进行映射
             Map<String, Invoker<T>> newUrlInvokerMap = toInvokers(invokerUrls);// URL和Invoker的映射关系(一个Invoker对应一个服务类)
             Map<String, List<Invoker<T>>> newMethodInvokerMap = toMethodInvokers(newUrlInvokerMap); // 方法和Invoker的映射关系(一个Invoker对应一个服务类)
             // state change
@@ -269,7 +269,7 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
             if (newUrlInvokerMap == null || newUrlInvokerMap.size() == 0) {
                 logger.error(new IllegalStateException("urls to invokers error .invokerUrls.size :" + invokerUrls.size() + ", invoker.size :0. urls :" + invokerUrls.toString()));
                 return;
-            }
+            } // 多分组情况下,合并,最终返回的还是方法名称和Invoker的映射关系
             this.methodInvokerMap = multiGroup ? toMergeMethodInvokerMap(newMethodInvokerMap) : newMethodInvokerMap;
             this.urlInvokerMap = newUrlInvokerMap; // 新的节点URL数据赋值
             try { // 将无用的Invoker关闭
@@ -279,7 +279,7 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
             }
         }
     }
-
+    // TODO 合并MethodInvoker,最终返回的还是方法名称和Invoker的映射关系
     private Map<String, List<Invoker<T>>> toMergeMethodInvokerMap(Map<String, List<Invoker<T>>> methodMap) {
         Map<String, List<Invoker<T>>> result = new HashMap<String, List<Invoker<T>>>();
         for (Map.Entry<String, List<Invoker<T>>> entry : methodMap.entrySet()) {
@@ -297,7 +297,7 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
             }
             if (groupMap.size() == 1) {
                 result.put(method, groupMap.values().iterator().next());
-            } else if (groupMap.size() > 1) {
+            } else if (groupMap.size() > 1) { // TODO 相同方法有不同的分组,通过集群处理不同分组下的Invoker???
                 List<Invoker<T>> groupInvokers = new ArrayList<Invoker<T>>();
                 for (List<Invoker<T>> groupList : groupMap.values()) {
                     groupInvokers.add(cluster.join(new StaticDirectory<T>(groupList)));
@@ -394,9 +394,9 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
                         enabled = !url.getParameter(Constants.DISABLED_KEY, false);
                     } else { // 获取enabled 是否开启,默认开启
                         enabled = url.getParameter(Constants.ENABLED_KEY, true);
-                    } // 开启状态。通过protocol进行获取服务的引用(Invoker)。通过url(服务的提供者)的协议头,获取对应的protocol协议处理器(DubboProtocol、RedisProtocol、...)
+                    } // TODO 开启状态。通过protocol进行获取服务的引用(Invoker)。通过url(服务的提供者)的协议头,获取对应的protocol协议处理器(DubboProtocol、RedisProtocol、...)
                     if (enabled) { // 将获取的Invoker(DubboInvoker、...)委托给InvokerDelegate(包装类)进行管理
-                        invoker = new InvokerDelegate<T>(protocol.refer(serviceType, url), url, providerUrl);
+                        invoker = new InvokerDelegate<T>(protocol.refer(serviceType, url), url, providerUrl); // 例:SPI->URL->DubboProtocol->过滤链(Filter)->DubboInvoker
                     }
                 } catch (Throwable t) {
                     logger.error("Failed to refer invoker for interface:" + serviceType + ",url:(" + url + ")" + t.getMessage(), t);
@@ -550,10 +550,10 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
         }
         // check deleted invoker
         List<String> deleted = null;
-        if (oldUrlInvokerMap != null) {
+        if (oldUrlInvokerMap != null) { // 收集需要关闭的Invoker
             Collection<Invoker<T>> newInvokers = newUrlInvokerMap.values();
             for (Map.Entry<String, Invoker<T>> entry : oldUrlInvokerMap.entrySet()) {
-                if (!newInvokers.contains(entry.getValue())) {
+                if (!newInvokers.contains(entry.getValue())) { // 通过判断 newUrlInvokerMap 是否含有 oldUrlInvokerMap 中的实例
                     if (deleted == null) {
                         deleted = new ArrayList<String>();
                     }
@@ -561,7 +561,7 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
                 }
             }
         }
-
+        // 删除Map引用,并调用Invoker的destroy()方法
         if (deleted != null) {
             for (String url : deleted) {
                 if (url != null) {

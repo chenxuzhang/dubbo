@@ -23,8 +23,8 @@ import com.alibaba.dubbo.rpc.Invocation;
 import com.alibaba.dubbo.rpc.Invoker;
 import com.alibaba.dubbo.rpc.Result;
 import com.alibaba.dubbo.rpc.RpcException;
-
 /**
+ * 类加载器处理。用于服务的提供者端
  * ClassLoaderInvokerFilter
  */
 @Activate(group = Constants.PROVIDER, order = -30000)
@@ -33,8 +33,8 @@ public class ClassLoaderFilter implements Filter {
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
         ClassLoader ocl = Thread.currentThread().getContextClassLoader();
-        Thread.currentThread().setContextClassLoader(invoker.getInterface().getClassLoader());
-        try {
+        Thread.currentThread().setContextClassLoader(invoker.getInterface().getClassLoader());  // 将当前线程的上下文类加载器设置为接口服务类的加载器
+        try { // setContextClassLoader(*) 类加载器,打破双亲委派机制的一种解决办法
             return invoker.invoke(invocation);
         } finally {
             Thread.currentThread().setContextClassLoader(ocl);

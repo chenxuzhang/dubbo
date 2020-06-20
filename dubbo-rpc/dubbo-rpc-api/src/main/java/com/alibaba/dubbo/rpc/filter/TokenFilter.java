@@ -27,8 +27,8 @@ import com.alibaba.dubbo.rpc.RpcContext;
 import com.alibaba.dubbo.rpc.RpcException;
 
 import java.util.Map;
-
 /**
+ * 验证token,只能用于提供者端
  * TokenInvokerFilter
  */
 @Activate(group = Constants.PROVIDER, value = Constants.TOKEN_KEY)

@@ -26,11 +26,11 @@ import com.alibaba.dubbo.rpc.RpcException;
 import com.alibaba.dubbo.rpc.RpcResult;
 
 /**
- * EchoInvokerFilter
+ * 回声测试拦截器
  */
 @Activate(group = Constants.PROVIDER, order = -110000)
 public class EchoFilter implements Filter {
-
+    // 判断方法名称 $echo 并且 参数只有一个,将参数当做结果返回回去,拦截器到此结束。
     @Override
     public Result invoke(Invoker<?> invoker, Invocation inv) throws RpcException {
         if (inv.getMethodName().equals(Constants.$ECHO) && inv.getArguments() != null && inv.getArguments().length == 1)

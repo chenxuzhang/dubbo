@@ -61,15 +61,15 @@ public class ExceptionFilter implements Filter {
         try {
             Result result = invoker.invoke(invocation);
             if (result.hasException() && GenericService.class != invoker.getInterface()) {
-                try {
+                try { // TODO 异常分为 Error[继承Throwable]、运行时异常(非检查异常)[继承RuntimeException,继承Exception]、非运行时异常(检查异常)[继承Exception]
                     Throwable exception = result.getException();
-
+                    // (运行时异常取反 且 继承了Exception) == 非运行时异常(检查异常),则抛出
                     // directly throw if it's checked exception
                     if (!(exception instanceof RuntimeException) && (exception instanceof Exception)) {
                         return result;
                     }
                     // directly throw if the exception appears in the signature
-                    try {
+                    try { // 检查方法签名上的异常。匹配则抛出
                         Method method = invoker.getInterface().getMethod(invocation.getMethodName(), invocation.getParameterTypes());
                         Class<?>[] exceptionClassses = method.getExceptionTypes();
                         for (Class<?> exceptionClass : exceptionClassses) {
@@ -80,28 +80,28 @@ public class ExceptionFilter implements Filter {
                     } catch (NoSuchMethodException e) {
                         return result;
                     }
-
+                    //
                     // for the exception not found in method's signature, print ERROR message in server's log.
                     logger.error("Got unchecked and undeclared exception which called by " + RpcContext.getContext().getRemoteHost()
                             + ". service: " + invoker.getInterface().getName() + ", method: " + invocation.getMethodName()
                             + ", exception: " + exception.getClass().getName() + ": " + exception.getMessage(), exception);
-
+                    // 异常类和接口类在同一jar包里,直接返回结果。因为,服务消费者可以反序列化该异常
                     // directly throw if exception class and interface class are in the same jar file.
                     String serviceFile = ReflectUtils.getCodeBase(invoker.getInterface());
                     String exceptionFile = ReflectUtils.getCodeBase(exception.getClass());
                     if (serviceFile == null || exceptionFile == null || serviceFile.equals(exceptionFile)) {
                         return result;
                     }
-                    // directly throw if it's JDK exception
+                    // 如果是JDK相关异常,直接返回
                     String className = exception.getClass().getName();
                     if (className.startsWith("java.") || className.startsWith("javax.")) {
                         return result;
                     }
-                    // directly throw if it's dubbo exception
+                    // dubbo相关异常,直接返回
                     if (exception instanceof RpcException) {
                         return result;
                     }
-
+                    // 包装成运行时异常,返回。TODO 异常会被吃掉,服务端不会打印任何日志
                     // otherwise, wrap with RuntimeException and throw back to the client
                     return new RpcResult(new RuntimeException(StringUtils.toString(exception)));
                 } catch (Throwable e) {

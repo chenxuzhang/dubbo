@@ -53,7 +53,7 @@ public class ProtocolListenerWrapper implements Protocol {
     public <T> Exporter<T> export(Invoker<T> invoker) throws RpcException {
         if (Constants.REGISTRY_PROTOCOL.equals(invoker.getUrl().getProtocol())) {
             return protocol.export(invoker);
-        }
+        } // 暴露服务监听器。暴露服务前和取消服务暴露之后执行监听回调
         return new ListenerExporterWrapper<T>(protocol.export(invoker),
                 Collections.unmodifiableList(ExtensionLoader.getExtensionLoader(ExporterListener.class)
                         .getActivateExtension(invoker.getUrl(), Constants.EXPORTER_LISTENER_KEY)));
@@ -63,7 +63,7 @@ public class ProtocolListenerWrapper implements Protocol {
     public <T> Invoker<T> refer(Class<T> type, URL url) throws RpcException {
         if (Constants.REGISTRY_PROTOCOL.equals(url.getProtocol())) {
             return protocol.refer(type, url);
-        }
+        } // 引用服务监听器。开始引用服务之前和取消引用之后执行监听回调
         return new ListenerInvokerWrapper<T>(protocol.refer(type, url),
                 Collections.unmodifiableList(
                         ExtensionLoader.getExtensionLoader(InvokerListener.class)

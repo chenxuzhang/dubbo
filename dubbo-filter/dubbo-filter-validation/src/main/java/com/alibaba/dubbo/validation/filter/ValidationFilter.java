@@ -39,7 +39,7 @@ public class ValidationFilter implements Filter {
     public void setValidation(Validation validation) {
         this.validation = validation;
     }
-
+    // 校验执行的 [方法名称、参数、参数类型]
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
         if (validation != null && !invocation.getMethodName().startsWith("$")
