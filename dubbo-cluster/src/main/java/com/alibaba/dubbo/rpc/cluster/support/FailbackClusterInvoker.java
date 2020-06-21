@@ -54,10 +54,10 @@ public class FailbackClusterInvoker<T> extends AbstractClusterInvoker<T> {
     /**
      * Use {@link NamedInternalThreadFactory} to produce {@link com.alibaba.dubbo.common.threadlocal.InternalThread}
      * which with the use of {@link com.alibaba.dubbo.common.threadlocal.InternalThreadLocal} in {@link RpcContext}.
-     */
+     */ // 失败重试线程
     private final ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(2,
             new NamedInternalThreadFactory("failback-cluster-timer", true));
-
+    // 维护执行失败的映射关系
     private final ConcurrentMap<Invocation, AbstractClusterInvoker<?>> failed = new ConcurrentHashMap<Invocation, AbstractClusterInvoker<?>>();
     private volatile ScheduledFuture<?> retryFuture;
 
@@ -103,7 +103,7 @@ public class FailbackClusterInvoker<T> extends AbstractClusterInvoker<T> {
             }
         }
     }
-
+    // 故障恢复。失败会返回结果,异步进行恢复(定时任务线程池实现),会做负载均衡。
     @Override
     protected Result doInvoke(Invocation invocation, List<Invoker<T>> invokers, LoadBalance loadbalance) throws RpcException {
         try {

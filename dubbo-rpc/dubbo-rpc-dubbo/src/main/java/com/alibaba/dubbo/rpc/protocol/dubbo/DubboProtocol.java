@@ -329,7 +329,7 @@ public class DubboProtocol extends AbstractProtocol {
             throw new RpcException("Cannot instantiate the serialization optimizer class: " + className, e);
         }
     }
-    // url:合并后的URL
+    // DubboProtocol-->DubboInvoker(在消费端,DubboInvoker通过底层的通讯协议和服务提供者进行交互)
     @Override
     public <T> Invoker<T> refer(Class<T> serviceType, URL url) throws RpcException {
         optimizeSerialization(url);
@@ -344,11 +344,11 @@ public class DubboProtocol extends AbstractProtocol {
         boolean service_share_connect = false;
         int connections = url.getParameter(Constants.CONNECTIONS_KEY, 0);
         // if not configured, connection is shared, otherwise, one connection for one service
-        if (connections == 0) {
+        if (connections == 0) { // 默认共享连接
             service_share_connect = true;
             connections = 1;
         }
-
+        // 通过参数创建用于和服务提供者交互的连接
         ExchangeClient[] clients = new ExchangeClient[connections];
         for (int i = 0; i < clients.length; i++) {
             if (service_share_connect) {
@@ -364,7 +364,7 @@ public class DubboProtocol extends AbstractProtocol {
      * Get shared connection 共享客户端
      */
     private ExchangeClient getSharedClient(URL url) {
-        String key = url.getAddress();
+        String key = url.getAddress(); // 缓存维护一台机器的共享连接
         ReferenceCountExchangeClient client = referenceClientMap.get(key);
         if (client != null) {
             if (!client.isClosed()) {
@@ -394,10 +394,10 @@ public class DubboProtocol extends AbstractProtocol {
      * Create new connection 创建连接
      */
     private ExchangeClient initClient(URL url) {
-
+        // 构建URL,用于后续功能组件选择
         // client type setting. 客户端类型,默认netty
         String str = url.getParameter(Constants.CLIENT_KEY, url.getParameter(Constants.SERVER_KEY, Constants.DEFAULT_REMOTING_CLIENT));
-        // 协议类型,默认dubbo协议
+        // 协议类型,默认dubbo协议 codec:dubbo
         url = url.addParameter(Constants.CODEC_KEY, DubboCodec.NAME);
         // enable heartbeat by default 心跳时间
         url = url.addParameterIfAbsent(Constants.HEARTBEAT_KEY, String.valueOf(Constants.DEFAULT_HEARTBEAT));
@@ -410,7 +410,7 @@ public class DubboProtocol extends AbstractProtocol {
 
         ExchangeClient client;
         try {
-            // connection should be lazy
+            // connection should be lazy // 延迟连接
             if (url.getParameter(Constants.LAZY_CONNECT_KEY, false)) {
                 client = new LazyConnectExchangeClient(url, requestHandler);
             } else {

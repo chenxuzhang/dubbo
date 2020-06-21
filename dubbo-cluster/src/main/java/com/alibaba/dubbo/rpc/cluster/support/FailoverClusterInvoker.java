@@ -39,7 +39,7 @@ import java.util.Set;
  * Note that retry causes latency.
  * <p>
  * <a href="http://en.wikipedia.org/wiki/Failover">Failover</a>
- *
+ * 故障转移-->重试
  */
 public class FailoverClusterInvoker<T> extends AbstractClusterInvoker<T> {
 
@@ -48,26 +48,26 @@ public class FailoverClusterInvoker<T> extends AbstractClusterInvoker<T> {
     public FailoverClusterInvoker(Directory<T> directory) {
         super(directory);
     }
-
+    // 容错默认策略。执行失败自动重试2次(默认设置) + 1次,会做负载均衡
     @Override
     @SuppressWarnings({"unchecked", "rawtypes"})
     public Result doInvoke(Invocation invocation, final List<Invoker<T>> invokers, LoadBalance loadbalance) throws RpcException {
         List<Invoker<T>> copyinvokers = invokers;
-        checkInvokers(copyinvokers, invocation);
+        checkInvokers(copyinvokers, invocation); // 默认是2次(重试) + 1次
         int len = getUrl().getMethodParameter(invocation.getMethodName(), Constants.RETRIES_KEY, Constants.DEFAULT_RETRIES) + 1;
-        if (len <= 0) {
+        if (len <= 0) { // len == 重试次数
             len = 1;
         }
         // retry loop.
         RpcException le = null; // last exception.
-        List<Invoker<T>> invoked = new ArrayList<Invoker<T>>(copyinvokers.size()); // invoked invokers.
-        Set<String> providers = new HashSet<String>(len);
+        List<Invoker<T>> invoked = new ArrayList<Invoker<T>>(copyinvokers.size()); // 维护已经执行的Invoker列表
+        Set<String> providers = new HashSet<String>(len); // 记录执行过那些提供者
         for (int i = 0; i < len; i++) {
-            //Reselect before retry to avoid a change of candidate `invokers`.
-            //NOTE: if `invokers` changed, then `invoked` also lose accuracy.
-            if (i > 0) {
+            // 在重试前重新选择以避免更改候选的"invokers"。
+            // 注意：如果“invokers”已更改，则“invoked”也将失去准确性。
+            if (i > 0) { // 大于0,即进入到重试状态
                 checkWhetherDestroyed();
-                copyinvokers = list(invocation);
+                copyinvokers = list(invocation); // 重新从Directory获取提供者列表,保证最新
                 // check again
                 checkInvokers(copyinvokers, invocation);
             }
@@ -86,7 +86,7 @@ public class FailoverClusterInvoker<T> extends AbstractClusterInvoker<T> {
                             + " on the consumer " + NetUtils.getLocalHost()
                             + " using the dubbo version " + Version.getVersion() + ". Last error is: "
                             + le.getMessage(), le);
-                }
+                } // 执行成功则返回结果集
                 return result;
             } catch (RpcException e) {
                 if (e.isBiz()) { // biz exception.
@@ -95,7 +95,7 @@ public class FailoverClusterInvoker<T> extends AbstractClusterInvoker<T> {
                 le = e;
             } catch (Throwable e) {
                 le = new RpcException(e.getMessage(), e);
-            } finally {
+            } finally { // 记录提供者的Address
                 providers.add(invoker.getUrl().getAddress());
             }
         }

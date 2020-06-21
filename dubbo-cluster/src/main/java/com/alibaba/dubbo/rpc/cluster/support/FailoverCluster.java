@@ -23,7 +23,7 @@ import com.alibaba.dubbo.rpc.cluster.Directory;
 
 /**
  * {@link FailoverClusterInvoker}
- *
+ * 集群容错--故障转移-->失败重试(按照设定的重试次数,进行重试)
  */
 public class FailoverCluster implements Cluster {
 

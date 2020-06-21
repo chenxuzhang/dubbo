@@ -23,7 +23,7 @@ import com.alibaba.dubbo.rpc.cluster.Directory;
 
 /**
  * {@link FailfastClusterInvoker}
- *
+ * 集群容错--快速失败
  */
 public class FailfastCluster implements Cluster {
 
