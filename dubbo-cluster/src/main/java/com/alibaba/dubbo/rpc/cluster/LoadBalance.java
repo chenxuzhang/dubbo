@@ -30,7 +30,7 @@ import java.util.List;
  * LoadBalance. (SPI, Singleton, ThreadSafe)
  * <p>
  * <a href="http://en.wikipedia.org/wiki/Load_balancing_(computing)">Load-Balancing</a>
- *
+ * 负载均衡,默认随机策略
  * @see com.alibaba.dubbo.rpc.cluster.Cluster#join(Directory)
  */
 @SPI(RandomLoadBalance.NAME)
@@ -39,7 +39,7 @@ public interface LoadBalance {
     /**
      * select one invoker in list.
      *
-     * @param invokers   invokers.
+     * @param invokers   invokers. 所有可用的Invoker
      * @param url        refer url
      * @param invocation invocation.
      * @return selected invoker.

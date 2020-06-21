@@ -216,7 +216,7 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
         if (configuratorUrls != null && !configuratorUrls.isEmpty()) {
             this.configurators = toConfigurators(configuratorUrls);
         }
-        // routers 处理routers目录下的URLS
+        // routers 处理routers目录下的URLS。该服务的路由策略,在获取服务提供者的时候,会经过路由过滤,返回值才是可用的
         if (routerUrls != null && !routerUrls.isEmpty()) {
             List<Router> routers = toRouters(routerUrls);
             if (routers != null) { // null - do nothing
