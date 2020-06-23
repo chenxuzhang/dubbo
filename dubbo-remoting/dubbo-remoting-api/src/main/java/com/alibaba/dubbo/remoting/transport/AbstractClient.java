@@ -147,8 +147,8 @@ public abstract class AbstractClient extends AbstractEndpoint implements Client 
         }
         return reconnect;
     }
-
     /**
+     * 初始化 连接 校验线程,用于定时轮询校验connect是否断开连接,断开后,重新连接
      * init reconnect thread
      */
     private synchronized void initConnectStatusCheckCommand() {
@@ -258,17 +258,17 @@ public abstract class AbstractClient extends AbstractEndpoint implements Client 
             return false;
         return channel.hasAttribute(key);
     }
-
+    // 消费端发送消息
     @Override
     public void send(Object message, boolean sent) throws RemotingException {
         if (send_reconnect && !isConnected()) {
             connect();
-        }
+        } // 模板方法,获取传输的通道
         Channel channel = getChannel();
         //TODO Can the value returned by getChannel() be null? need improvement.
-        if (channel == null || !channel.isConnected()) {
+        if (channel == null || !channel.isConnected()) { // 验证通道有效性
             throw new RemotingException(this, "message can not send, because channel is closed . url:" + getUrl());
-        }
+        } // 发送消息, 消息的编解码和序列化是在具体的通讯客户端实现的
         channel.send(message, sent);
     }
 

@@ -84,18 +84,18 @@ public class NettyClient extends AbstractClient {
             }
         });
     }
-
+    // 发起连接
     @Override
     protected void doConnect() throws Throwable {
         long start = System.currentTimeMillis();
         ChannelFuture future = bootstrap.connect(getConnectAddress());
-        try {
+        try { // 同步等待连接
             boolean ret = future.awaitUninterruptibly(getConnectTimeout(), TimeUnit.MILLISECONDS);
-
+            // 连接成功
             if (ret && future.isSuccess()) {
                 Channel newChannel = future.channel();
-                try {
-                    // Close old channel
+                try { // 处理旧通道连接
+                    // 关闭旧的通道连接
                     Channel oldChannel = NettyClient.this.channel; // copy reference
                     if (oldChannel != null) {
                         try {
@@ -107,7 +107,7 @@ public class NettyClient extends AbstractClient {
                             NettyChannel.removeChannelIfDisconnected(oldChannel);
                         }
                     }
-                } finally {
+                } finally { // 处理新通道连接
                     if (NettyClient.this.isClosed()) {
                         try {
                             if (logger.isInfoEnabled()) {
@@ -122,10 +122,10 @@ public class NettyClient extends AbstractClient {
                         NettyClient.this.channel = newChannel;
                     }
                 }
-            } else if (future.cause() != null) {
+            } else if (future.cause() != null) { // 通道连接异常
                 throw new RemotingException(this, "client(url: " + getUrl() + ") failed to connect to server "
                         + getRemoteAddress() + ", error message is:" + future.cause().getMessage(), future.cause());
-            } else {
+            } else { // 通道连接异常
                 throw new RemotingException(this, "client(url: " + getUrl() + ") failed to connect to server "
                         + getRemoteAddress() + " client-side timeout "
                         + getConnectTimeout() + "ms (elapsed: " + (System.currentTimeMillis() - start) + "ms) from netty client "
@@ -152,7 +152,7 @@ public class NettyClient extends AbstractClient {
         //can't shutdown nioEventLoopGroup
         //nioEventLoopGroup.shutdownGracefully();
     }
-
+    // 获取传输数据用的通道,返回NettyClient实例
     @Override
     protected com.alibaba.dubbo.remoting.Channel getChannel() {
         Channel c = channel;

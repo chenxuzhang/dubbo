@@ -38,7 +38,7 @@ import java.util.concurrent.ConcurrentMap;
 final class NettyChannel extends AbstractChannel {
 
     private static final Logger logger = LoggerFactory.getLogger(NettyChannel.class);
-
+    // Channel和当前类实例(Channel、URL、ChannelHandler)的映射关系
     private static final ConcurrentMap<Channel, NettyChannel> channelMap = new ConcurrentHashMap<Channel, NettyChannel>();
 
     private final Channel channel;
@@ -52,7 +52,7 @@ final class NettyChannel extends AbstractChannel {
         }
         this.channel = channel;
     }
-
+    // 获取Channel的绑定实例 or 将Channel和NettyChannel实例绑定
     static NettyChannel getOrAddChannel(Channel ch, URL url, ChannelHandler handler) {
         if (ch == null) {
             return null;
