@@ -25,3 +25,7 @@ We are now collecting dubbo user info in order to help us to improve dubbo bette
 * [Dubbo developer guide(English)](http://dubbo.apache.org/books/dubbo-dev-book-en/) or [Dubbo开发手册(中文)](http://dubbo.apache.org/books/dubbo-dev-book/) - Detailly introduce the design principal, extension mechanisms, code conventions, version control and building project, etc.
 * [Dubbo admin manual(English)](http://dubbo.apache.org/books/dubbo-admin-book-en/) or [Dubbo管理手册(中文)](http://dubbo.apache.org/books/dubbo-admin-book/) - Describe how to use Dubbo registry and admin-console.
 
+
+
+
+[Netty4请求-响应流程](https://github.com/chenxuzhang/dubbo/blob/2.6.x/dubbo-remoting/dubbo-remoting-netty4/src/main/resources/%E8%AF%B7%E6%B1%82-%E5%93%8D%E5%BA%94%E6%B5%81%E7%A8%8B.md)
