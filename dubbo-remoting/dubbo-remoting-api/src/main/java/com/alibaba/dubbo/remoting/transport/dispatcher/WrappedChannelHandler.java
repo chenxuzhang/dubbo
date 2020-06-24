@@ -34,19 +34,19 @@ import java.util.concurrent.Executors;
 
 import static com.alibaba.dubbo.common.Constants.SHARED_CONSUMER_EXECUTOR_PORT;
 import static com.alibaba.dubbo.common.Constants.SHARE_EXECUTOR_KEY;
-
+// 线程模型的父类,创建线程池和提供用于基本的调用链传播调用逻辑
 public class WrappedChannelHandler implements ChannelHandlerDelegate {
 
     protected static final Logger logger = LoggerFactory.getLogger(WrappedChannelHandler.class);
 
     protected static final ExecutorService SHARED_EXECUTOR = Executors.newCachedThreadPool(new NamedThreadFactory("DubboSharedHandler", true));
-
+    // 线程池,通过SPI机制 + URL 加载实现类
     protected final ExecutorService executor;
-
+    // 通讯客户端。例:NettyClient实例
     protected final ChannelHandler handler;
 
     protected final URL url;
-
+    // 存储线程池实例的容器。数据格式为Map<String,Map<String,ExecutorService>> 。key1:区分消费端 or 提供者端,key2:区分共享(固定字符串)还是非共享(URL端口号),value:线程池实例
     protected DataStore dataStore = ExtensionLoader.getExtensionLoader(DataStore.class).getDefaultExtension();
 
     public WrappedChannelHandler(ChannelHandler handler, URL url) {
@@ -84,12 +84,12 @@ public class WrappedChannelHandler implements ChannelHandlerDelegate {
             logger.warn("fail to destroy thread pool of server: " + t.getMessage(), t);
         }
     }
-
+    // 连接事件
     @Override
     public void connected(Channel channel) throws RemotingException {
         handler.connected(channel);
     }
-
+    // 关闭连接事件
     @Override
     public void disconnected(Channel channel) throws RemotingException {
         handler.disconnected(channel);
@@ -99,12 +99,12 @@ public class WrappedChannelHandler implements ChannelHandlerDelegate {
     public void sent(Channel channel, Object message) throws RemotingException {
         handler.sent(channel, message);
     }
-
+    // 请求、响应事件
     @Override
     public void received(Channel channel, Object message) throws RemotingException {
         handler.received(channel, message);
     }
-
+    // 接受事件-异常
     @Override
     public void caught(Channel channel, Throwable exception) throws RemotingException {
         handler.caught(channel, exception);

@@ -51,13 +51,13 @@ public class HeaderExchangeServer implements ExchangeServer {
             new NamedThreadFactory(
                     "dubbo-remoting-server-heartbeat",
                     true));
-    private final Server server;
+    private final Server server; // 开启了的服务(Netty4、Netty3、...)
     // heartbeat timer
     private ScheduledFuture<?> heartbeatTimer;
     // heartbeat timeout (ms), default value is 0 , won't execute a heartbeat.
-    private int heartbeat;
-    private int heartbeatTimeout;
-    private AtomicBoolean closed = new AtomicBoolean(false);
+    private int heartbeat; // 心跳时间
+    private int heartbeatTimeout; // 心跳超时时间
+    private AtomicBoolean closed = new AtomicBoolean(false); // 服务端关闭标记
 
     public HeaderExchangeServer(Server server) {
         if (server == null) {
@@ -65,13 +65,13 @@ public class HeaderExchangeServer implements ExchangeServer {
         }
         this.server = server;
         this.heartbeat = server.getUrl().getParameter(Constants.HEARTBEAT_KEY, 0);
-        this.heartbeatTimeout = server.getUrl().getParameter(Constants.HEARTBEAT_TIMEOUT_KEY, heartbeat * 3);
+        this.heartbeatTimeout = server.getUrl().getParameter(Constants.HEARTBEAT_TIMEOUT_KEY, heartbeat * 3); // 默认3倍。同客户端
         if (heartbeatTimeout < heartbeat * 2) {
             throw new IllegalStateException("heartbeatTimeout < heartbeatInterval * 2");
-        }
+        } // 开启心跳检测线程
         startHeartbeatTimer();
     }
-
+    // 获取已开启的Server
     public Server getServer() {
         return server;
     }
@@ -102,7 +102,7 @@ public class HeaderExchangeServer implements ExchangeServer {
         doClose();
         server.close();
     }
-
+    // 关闭服务端
     @Override
     public void close(final int timeout) {
         startClose();
@@ -110,7 +110,7 @@ public class HeaderExchangeServer implements ExchangeServer {
             final long max = (long) timeout;
             final long start = System.currentTimeMillis();
             if (getUrl().getParameter(Constants.CHANNEL_SEND_READONLYEVENT_KEY, true)) {
-                sendChannelReadOnlyEvent();
+                sendChannelReadOnlyEvent(); // 通知客户端
             }
             while (HeaderExchangeServer.this.isRunning()
                     && System.currentTimeMillis() - start < max) {
@@ -129,7 +129,7 @@ public class HeaderExchangeServer implements ExchangeServer {
     public void startClose() {
         server.startClose();
     }
-
+    // 向客户端发送Request.READONLY_EVENT事件,客户端会通过此标记判断服务是否可用
     private void sendChannelReadOnlyEvent() {
         Request request = new Request();
         request.setEvent(Request.READONLY_EVENT);
@@ -158,13 +158,13 @@ public class HeaderExchangeServer implements ExchangeServer {
             logger.warn(t.getMessage(), t);
         }
     }
-
+    // 从服务端获取维护的客户端通道
     @Override
     public Collection<ExchangeChannel> getExchangeChannels() {
         Collection<ExchangeChannel> exchangeChannels = new ArrayList<ExchangeChannel>();
         Collection<Channel> channels = server.getChannels();
         if (channels != null && !channels.isEmpty()) {
-            for (Channel channel : channels) {
+            for (Channel channel : channels) { // 将Channel外包裹一层
                 exchangeChannels.add(HeaderExchangeChannel.getOrAddChannel(channel));
             }
         }
@@ -251,10 +251,10 @@ public class HeaderExchangeServer implements ExchangeServer {
         }
         server.send(message, sent);
     }
-
+    // 开启心跳检测
     private void startHeartbeatTimer() {
         stopHeartbeatTimer();
-        if (heartbeat > 0) {
+        if (heartbeat > 0) { // 线程池定时任务
             heartbeatTimer = scheduled.scheduleWithFixedDelay(
                     new HeartBeatTask(new HeartBeatTask.ChannelProvider() {
                         @Override
@@ -266,7 +266,7 @@ public class HeaderExchangeServer implements ExchangeServer {
                     heartbeat, heartbeat, TimeUnit.MILLISECONDS);
         }
     }
-
+    // 关闭心跳检测
     private void stopHeartbeatTimer() {
         try {
             ScheduledFuture<?> timer = heartbeatTimer;

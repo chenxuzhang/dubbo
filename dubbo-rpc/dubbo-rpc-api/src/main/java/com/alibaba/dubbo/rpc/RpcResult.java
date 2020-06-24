@@ -45,7 +45,7 @@ public class RpcResult implements Result, Serializable {
     public RpcResult(Throwable exception) {
         this.exception = exception;
     }
-
+    // 返回结果。要么返回正确调用的返回值,要么抛出服务提供者返回的异常信息
     @Override
     public Object recreate() throws Throwable {
         if (exception != null) {

@@ -26,7 +26,7 @@ import com.alibaba.dubbo.remoting.Dispatcher;
 public class DirectDispatcher implements Dispatcher {
 
     public static final String NAME = "direct";
-
+    // 所有请求不派发至线程池,都在Netty业务线程处理
     @Override
     public ChannelHandler dispatch(ChannelHandler handler, URL url) {
         return handler;

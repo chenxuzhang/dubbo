@@ -37,8 +37,8 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.concurrent.DefaultThreadFactory;
 
 import java.util.concurrent.TimeUnit;
-
 /**
+ * 消息的发送与接收都是需要以Client为入口。发送消息入口是NettyCilent父类send(***)方法、接收消息入口是NettyClientHandler类的channelRead方法(此处为Netty的业务线程)
  * NettyClient.
  */
 public class NettyClient extends AbstractClient {
@@ -52,7 +52,7 @@ public class NettyClient extends AbstractClient {
     private volatile Channel channel; // volatile, please copy reference to use
 
     public NettyClient(final URL url, final ChannelHandler handler) throws RemotingException {
-        super(url, wrapChannelHandler(url, handler));
+        super(url, wrapChannelHandler(url, handler)); // 通道处理类进行包装。new MultiMessageHandler(new HeartbeatHandler(new 线程模型实现类))
     }
 
     @Override
@@ -78,8 +78,8 @@ public class NettyClient extends AbstractClient {
             protected void initChannel(Channel ch) throws Exception {
                 NettyCodecAdapter adapter = new NettyCodecAdapter(getCodec(), getUrl(), NettyClient.this);
                 ch.pipeline()//.addLast("logging",new LoggingHandler(LogLevel.INFO))//for debug
-                        .addLast("decoder", adapter.getDecoder())
-                        .addLast("encoder", adapter.getEncoder())
+                        .addLast("decoder", adapter.getDecoder()) // 解码
+                        .addLast("encoder", adapter.getEncoder()) // 编码
                         .addLast("handler", nettyClientHandler);
             }
         });

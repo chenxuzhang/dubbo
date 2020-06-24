@@ -54,10 +54,10 @@ public class HeaderExchangeHandler implements ChannelHandlerDelegate {
         }
         this.handler = handler;
     }
-
+    // 处理响应请求
     static void handleResponse(Channel channel, Response response) throws RemotingException {
         if (response != null && !response.isHeartbeat()) {
-            DefaultFuture.received(channel, response);
+            DefaultFuture.received(channel, response); // 填充返回结果,唤醒同步等待线程(如果有的话)
         }
     }
 
@@ -141,7 +141,7 @@ public class HeaderExchangeHandler implements ChannelHandlerDelegate {
             }
         } catch (Throwable t) {
             exception = t;
-        }
+        } // 发送请求。通过sent方法记录发送的时间戳
         if (message instanceof Request) {
             Request request = (Request) message;
             DefaultFuture.sent(channel, request);
@@ -161,22 +161,22 @@ public class HeaderExchangeHandler implements ChannelHandlerDelegate {
     @Override
     public void received(Channel channel, Object message) throws RemotingException {
         channel.setAttribute(KEY_READ_TIMESTAMP, System.currentTimeMillis());
-        ExchangeChannel exchangeChannel = HeaderExchangeChannel.getOrAddChannel(channel);
-        try {
+        ExchangeChannel exchangeChannel = HeaderExchangeChannel.getOrAddChannel(channel); // 将实例化ExchangeChannel
+        try { // 此处将Channel转换为ExchangeChannel,调用最终的handler处理器(就没然后了)
             if (message instanceof Request) {
                 // handle request.
                 Request request = (Request) message;
-                if (request.isEvent()) {
+                if (request.isEvent()) { // 事件
                     handlerEvent(channel, request);
                 } else {
-                    if (request.isTwoWay()) {
+                    if (request.isTwoWay()) { // 接收到请求,处理请求(调用本地服务),组装Response返回体
                         Response response = handleRequest(exchangeChannel, request);
-                        channel.send(response);
-                    } else {
+                        channel.send(response); // 使用通道将消息发送出去。
+                    } else { // 单向请求
                         handler.received(exchangeChannel, request.getData());
                     }
                 }
-            } else if (message instanceof Response) {
+            } else if (message instanceof Response) { // 接收到的是响应,是客户端发起请求的响应
                 handleResponse(channel, (Response) message);
             } else if (message instanceof String) {
                 if (isClientSide(channel)) {

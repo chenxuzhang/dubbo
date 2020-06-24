@@ -39,11 +39,11 @@ public class ExecutionChannelHandler extends WrappedChannelHandler {
     public ExecutionChannelHandler(ChannelHandler handler, URL url) {
         super(handler, url);
     }
-
+    // 作为消息接收端,请求类型的消息派发至线程池,其他在Netty业务线程执行
     @Override
     public void received(Channel channel, Object message) throws RemotingException {
         ExecutorService cexecutor = getExecutorService();
-        if (message instanceof Request) {
+        if (message instanceof Request) { // 请求体
             try {
                 cexecutor.execute(new ChannelEventRunnable(channel, handler, ChannelState.RECEIVED, message));
             } catch (Throwable t) {

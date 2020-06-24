@@ -36,13 +36,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 final class ReferenceCountExchangeClient implements ExchangeClient {
 
     private final URL url;
-    private final AtomicInteger refenceCount = new AtomicInteger(0);
+    private final AtomicInteger refenceCount = new AtomicInteger(0); // 客户端引用数量(按照服务为单位,每引用一次,计数器加一)
 
     //    private final ExchangeHandler handler;
     private final ConcurrentMap<String, LazyConnectExchangeClient> ghostClientMap;
-    private ExchangeClient client;
+    private ExchangeClient client; // 具体干活的类
 
-
+    // 装饰者类
     public ReferenceCountExchangeClient(ExchangeClient client, ConcurrentMap<String, LazyConnectExchangeClient> ghostClientMap) {
         this.client = client;
         refenceCount.incrementAndGet();
@@ -148,7 +148,7 @@ final class ReferenceCountExchangeClient implements ExchangeClient {
 
     @Override
     public void close(int timeout) {
-        if (refenceCount.decrementAndGet() <= 0) {
+        if (refenceCount.decrementAndGet() <= 0) { // 引用次数小于等于0的时候,才可以关闭此连接
             if (timeout == 0) {
                 client.close();
             } else {
@@ -176,7 +176,7 @@ final class ReferenceCountExchangeClient implements ExchangeClient {
         String key = url.getAddress();
         // in worst case there's only one ghost connection.
         LazyConnectExchangeClient gclient = ghostClientMap.get(key);
-        if (gclient == null || gclient.isClosed()) {
+        if (gclient == null || gclient.isClosed()) { // 没有 或 通道关闭,创建延迟连接的客户端(什么时候使用,什么时候发起连接请求)
             gclient = new LazyConnectExchangeClient(lazyUrl, client.getExchangeHandler());
             ghostClientMap.put(key, gclient);
         }

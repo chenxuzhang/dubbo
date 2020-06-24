@@ -46,12 +46,12 @@ public class HeaderExchangeClient implements ExchangeClient {
 
     private static final ScheduledThreadPoolExecutor scheduled = new ScheduledThreadPoolExecutor(2, new NamedThreadFactory("dubbo-remoting-client-heartbeat", true));
     private final Client client;
-    private final ExchangeChannel channel;
+    private final ExchangeChannel channel; // 信息交换通道。客户端只不过是对外的门面,通道才是实现具体业务逻辑的地方
     // heartbeat timer
     private ScheduledFuture<?> heartbeatTimer;
     // heartbeat(ms), default value is 0 , won't execute a heartbeat.
-    private int heartbeat;
-    private int heartbeatTimeout;
+    private int heartbeat; // 心跳时间
+    private int heartbeatTimeout; // 心跳超时时间
 
     public HeaderExchangeClient(Client client, boolean needHeartbeat) {
         if (client == null) {
@@ -60,8 +60,8 @@ public class HeaderExchangeClient implements ExchangeClient {
         this.client = client;
         this.channel = new HeaderExchangeChannel(client);
         String dubbo = client.getUrl().getParameter(Constants.DUBBO_VERSION_KEY);
-        this.heartbeat = client.getUrl().getParameter(Constants.HEARTBEAT_KEY, dubbo != null && dubbo.startsWith("1.0.") ? Constants.DEFAULT_HEARTBEAT : 0);
-        this.heartbeatTimeout = client.getUrl().getParameter(Constants.HEARTBEAT_TIMEOUT_KEY, heartbeat * 3);
+        this.heartbeat = client.getUrl().getParameter(Constants.HEARTBEAT_KEY, dubbo != null && dubbo.startsWith("1.0.") ? Constants.DEFAULT_HEARTBEAT : 0); // 心跳时间
+        this.heartbeatTimeout = client.getUrl().getParameter(Constants.HEARTBEAT_TIMEOUT_KEY, heartbeat * 3); // 心跳超时时间。默认是心跳时间的3倍
         if (heartbeatTimeout < heartbeat * 2) {
             throw new IllegalStateException("heartbeatTimeout < heartbeatInterval * 2");
         }
@@ -179,7 +179,7 @@ public class HeaderExchangeClient implements ExchangeClient {
     public boolean hasAttribute(String key) {
         return channel.hasAttribute(key);
     }
-
+    // 开启心跳检测
     private void startHeartbeatTimer() {
         stopHeartbeatTimer();
         if (heartbeat > 0) {
@@ -193,7 +193,7 @@ public class HeaderExchangeClient implements ExchangeClient {
                     heartbeat, heartbeat, TimeUnit.MILLISECONDS);
         }
     }
-
+    // 关闭心跳检测
     private void stopHeartbeatTimer() {
         if (heartbeatTimer != null && !heartbeatTimer.isCancelled()) {
             try {

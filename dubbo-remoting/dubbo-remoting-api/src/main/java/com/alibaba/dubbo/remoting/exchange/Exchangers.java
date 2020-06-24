@@ -97,7 +97,7 @@ public class Exchangers {
     public static ExchangeClient connect(String url, ExchangeHandler handler) throws RemotingException {
         return connect(URL.valueOf(url), handler);
     }
-
+    // 获取客户端连接总入口
     public static ExchangeClient connect(URL url, ExchangeHandler handler) throws RemotingException {
         if (url == null) {
             throw new IllegalArgumentException("url == null");

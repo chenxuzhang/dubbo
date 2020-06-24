@@ -29,13 +29,13 @@ import com.alibaba.dubbo.remoting.transport.dispatcher.WrappedChannelHandler;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
-
+// 派发至线程池进行处理(数据响应、连接事件、断开连接事件)、心跳信息接收已在Netty业务线程处理(HeartbeatHandler心跳处理),心跳信息的发送是单独的定时任务线程池
 public class AllChannelHandler extends WrappedChannelHandler {
 
     public AllChannelHandler(ChannelHandler handler, URL url) {
         super(handler, url);
     }
-
+    // 连接事件
     @Override
     public void connected(Channel channel) throws RemotingException {
         ExecutorService cexecutor = getExecutorService();
@@ -45,7 +45,7 @@ public class AllChannelHandler extends WrappedChannelHandler {
             throw new ExecutionException("connect event", channel, getClass() + " error when process connected event .", t);
         }
     }
-
+    // 断开连接事件
     @Override
     public void disconnected(Channel channel) throws RemotingException {
         ExecutorService cexecutor = getExecutorService();
@@ -55,7 +55,7 @@ public class AllChannelHandler extends WrappedChannelHandler {
             throw new ExecutionException("disconnect event", channel, getClass() + " error when process disconnected event .", t);
         }
     }
-
+    // 接收消息事件(客户端 or 服务端)
     @Override
     public void received(Channel channel, Object message) throws RemotingException {
         ExecutorService cexecutor = getExecutorService();
@@ -78,7 +78,7 @@ public class AllChannelHandler extends WrappedChannelHandler {
             throw new ExecutionException(message, channel, getClass() + " error when process received event .", t);
         }
     }
-
+    // 异常消息
     @Override
     public void caught(Channel channel, Throwable exception) throws RemotingException {
         ExecutorService cexecutor = getExecutorService();

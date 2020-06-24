@@ -35,7 +35,7 @@ public class NettyClientHandler extends ChannelDuplexHandler {
     private final URL url;
 
     private final ChannelHandler handler;
-
+    // ChannelHandler NettyClient实例
     public NettyClientHandler(URL url, ChannelHandler handler) {
         if (url == null) {
             throw new IllegalArgumentException("url == null");
@@ -68,18 +68,18 @@ public class NettyClientHandler extends ChannelDuplexHandler {
             NettyChannel.removeChannelIfDisconnected(ctx.channel());
         }
     }
-
+    // 客户端读取服务端发来的请求数据,此处为Netty的业务线程,下一步就是Dubbo的线程模型处理
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         NettyChannel channel = NettyChannel.getOrAddChannel(ctx.channel(), url, handler);
-        try {
+        try { // handler==NettyClient实例。此处msg已经是解码后的结果
             handler.received(channel, msg);
         } finally {
             NettyChannel.removeChannelIfDisconnected(ctx.channel());
         }
     }
 
-
+    // 客户端向服务器发送数据
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
         super.write(ctx, msg, promise);
@@ -87,7 +87,7 @@ public class NettyClientHandler extends ChannelDuplexHandler {
         try {
             // if error happens from write, mock a BAD_REQUEST response so that invoker can return immediately without
             // waiting until timeout. FIXME: not sure if this is the right approach, but exceptionCaught doesn't work
-            // as expected.
+            // as expected. // 发送数据出现异常,将构建返回结果,响应回去
             if (promise.cause() != null && msg instanceof Request) {
                 Request request = (Request) msg;
                 Response response = new Response(request.getId(), request.getVersion());

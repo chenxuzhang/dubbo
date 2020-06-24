@@ -27,7 +27,7 @@ import com.alibaba.dubbo.remoting.transport.DecodeHandler;
 
 /**
  * DefaultMessenger
- *
+ * 信息交换层工厂类,用于生成客户端实例
  *
  */
 public class HeaderExchanger implements Exchanger {

@@ -60,17 +60,17 @@ final class LazyConnectExchangeClient implements ExchangeClient {
         this.requestWithWarning = url.getParameter(REQUEST_WITH_WARNING_KEY, false);
     }
 
-
+    // 初始化客戶端
     private void initClient() throws RemotingException {
         if (client != null)
             return;
         if (logger.isInfoEnabled()) {
             logger.info("Lazy connect to " + url);
-        }
+        } // 高并发场景,加锁
         connectLock.lock();
-        try {
+        try { // 双重校验
             if (client != null)
-                return;
+                return; // 发起连接,创建客户端
             this.client = Exchangers.connect(url, requestHandler);
         } finally {
             connectLock.unlock();

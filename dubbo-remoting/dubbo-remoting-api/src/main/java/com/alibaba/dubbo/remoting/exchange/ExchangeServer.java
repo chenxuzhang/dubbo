@@ -20,9 +20,9 @@ import com.alibaba.dubbo.remoting.Server;
 
 import java.net.InetSocketAddress;
 import java.util.Collection;
-
 /**
  * ExchangeServer. (API/SPI, Prototype, ThreadSafe)
+ * 服务端维护了心跳
  */
 public interface ExchangeServer extends Server {
 

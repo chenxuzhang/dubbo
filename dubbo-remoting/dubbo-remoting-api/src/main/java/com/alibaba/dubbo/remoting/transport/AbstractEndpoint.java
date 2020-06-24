@@ -33,11 +33,11 @@ import com.alibaba.dubbo.remoting.transport.codec.CodecAdapter;
 public abstract class AbstractEndpoint extends AbstractPeer implements Resetable {
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractEndpoint.class);
-
+    // 编解码实例
     private Codec2 codec;
-
+    // 超时时间 默认:1000毫秒
     private int timeout;
-
+    // 连接超时时间 默认:3000毫秒
     private int connectTimeout;
 
     public AbstractEndpoint(URL url, ChannelHandler handler) {
@@ -46,12 +46,12 @@ public abstract class AbstractEndpoint extends AbstractPeer implements Resetable
         this.timeout = url.getPositiveParameter(Constants.TIMEOUT_KEY, Constants.DEFAULT_TIMEOUT);
         this.connectTimeout = url.getPositiveParameter(Constants.CONNECT_TIMEOUT_KEY, Constants.DEFAULT_CONNECT_TIMEOUT);
     }
-
+    // 通过URL获取编解码实现类
     protected static Codec2 getChannelCodec(URL url) {
         String codecName = url.getParameter(Constants.CODEC_KEY, "telnet");
         if (ExtensionLoader.getExtensionLoader(Codec2.class).hasExtension(codecName)) {
             return ExtensionLoader.getExtensionLoader(Codec2.class).getExtension(codecName);
-        } else {
+        } else { // Codec 已经废弃
             return new CodecAdapter(ExtensionLoader.getExtensionLoader(Codec.class)
                     .getExtension(codecName));
         }

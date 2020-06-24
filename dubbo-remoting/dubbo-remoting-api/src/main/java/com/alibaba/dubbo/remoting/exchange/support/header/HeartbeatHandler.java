@@ -26,48 +26,48 @@ import com.alibaba.dubbo.remoting.RemotingException;
 import com.alibaba.dubbo.remoting.exchange.Request;
 import com.alibaba.dubbo.remoting.exchange.Response;
 import com.alibaba.dubbo.remoting.transport.AbstractChannelHandlerDelegate;
-
+// 心跳处理器。心跳消息都会被此类进行拦截。(Request->Response、Response)
 public class HeartbeatHandler extends AbstractChannelHandlerDelegate {
-
+    // 心跳处理器。记录和清除心跳的请求及相应时间
     private static final Logger logger = LoggerFactory.getLogger(HeartbeatHandler.class);
 
     public static String KEY_READ_TIMESTAMP = "READ_TIMESTAMP";
 
     public static String KEY_WRITE_TIMESTAMP = "WRITE_TIMESTAMP";
-
+    // ChannelHandler 为线程模型的实现类(all、direct、message、connection、execution)
     public HeartbeatHandler(ChannelHandler handler) {
         super(handler);
     }
-
+    // 连接请求 记录时间
     @Override
     public void connected(Channel channel) throws RemotingException {
         setReadTimestamp(channel);
         setWriteTimestamp(channel);
         handler.connected(channel);
     }
-
+    // 连接断开 清除时间
     @Override
     public void disconnected(Channel channel) throws RemotingException {
         clearReadTimestamp(channel);
         clearWriteTimestamp(channel);
         handler.disconnected(channel);
     }
-
+    // 发送消息 记录Write时间
     @Override
     public void sent(Channel channel, Object message) throws RemotingException {
         setWriteTimestamp(channel);
         handler.sent(channel, message);
     }
-
+    // 接受消息 记录read时间
     @Override
     public void received(Channel channel, Object message) throws RemotingException {
-        setReadTimestamp(channel);
-        if (isHeartbeatRequest(message)) {
+        setReadTimestamp(channel); // 接受到消息后,记录时间(含心跳、服务请求)
+        if (isHeartbeatRequest(message)) { // 接收到心跳请求 (客户端->服务端、服务端->客户端)  ->请求过程
             Request req = (Request) message;
-            if (req.isTwoWay()) {
+            if (req.isTwoWay()) { // 回复请求
                 Response res = new Response(req.getId(), req.getVersion());
                 res.setEvent(Response.HEARTBEAT_EVENT);
-                channel.send(res);
+                channel.send(res); // 调用链,最终会记录Write时间
                 if (logger.isInfoEnabled()) {
                     int heartbeat = channel.getUrl().getParameter(Constants.HEARTBEAT_KEY, 0);
                     if (logger.isDebugEnabled()) {
@@ -79,12 +79,12 @@ public class HeartbeatHandler extends AbstractChannelHandlerDelegate {
             }
             return;
         }
-        if (isHeartbeatResponse(message)) {
+        if (isHeartbeatResponse(message)) { // 接收到心跳响应 (客户端<-服务端、服务端<-客户端)  <-响应过程
             if (logger.isDebugEnabled()) {
                 logger.debug("Receive heartbeat response in thread " + Thread.currentThread().getName());
             }
             return;
-        }
+        } // 线程模型实现类
         handler.received(channel, message);
     }
 
@@ -103,11 +103,11 @@ public class HeartbeatHandler extends AbstractChannelHandlerDelegate {
     private void clearWriteTimestamp(Channel channel) {
         channel.removeAttribute(KEY_WRITE_TIMESTAMP);
     }
-
+    // 心跳请求判断
     private boolean isHeartbeatRequest(Object message) {
         return message instanceof Request && ((Request) message).isHeartbeat();
     }
-
+    // 心跳响应判断
     private boolean isHeartbeatResponse(Object message) {
         return message instanceof Response && ((Response) message).isHeartbeat();
     }

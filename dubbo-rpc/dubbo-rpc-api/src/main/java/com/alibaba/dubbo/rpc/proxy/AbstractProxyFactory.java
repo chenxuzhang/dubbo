@@ -33,7 +33,7 @@ public abstract class AbstractProxyFactory implements ProxyFactory {
     public <T> T getProxy(Invoker<T> invoker) throws RpcException {
         return getProxy(invoker, false);
     }
-
+    // 生成动态代理类,为dubbo的调用,提供透明化代理
     @Override
     public <T> T getProxy(Invoker<T> invoker, boolean generic) throws RpcException {
         Class<?>[] interfaces = null;

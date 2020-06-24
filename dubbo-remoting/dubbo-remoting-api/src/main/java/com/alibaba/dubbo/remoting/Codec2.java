@@ -25,10 +25,10 @@ import java.io.IOException;
 
 @SPI
 public interface Codec2 {
-
+    // 编码
     @Adaptive({Constants.CODEC_KEY})
     void encode(Channel channel, ChannelBuffer buffer, Object message) throws IOException;
-
+    // 解码
     @Adaptive({Constants.CODEC_KEY})
     Object decode(Channel channel, ChannelBuffer buffer) throws IOException;
 

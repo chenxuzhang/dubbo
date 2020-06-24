@@ -51,11 +51,11 @@ import java.util.Map;
 public class NettyServer extends AbstractServer implements Server {
 
     private static final Logger logger = LoggerFactory.getLogger(NettyServer.class);
-
+    // 客户端连接维护列表
     private Map<String, Channel> channels; // <ip:port, channel>
 
     private ServerBootstrap bootstrap;
-
+    // 服务的channel
     private io.netty.channel.Channel channel;
 
     private EventLoopGroup bossGroup;
@@ -68,11 +68,11 @@ public class NettyServer extends AbstractServer implements Server {
     @Override
     protected void doOpen() throws Throwable {
         bootstrap = new ServerBootstrap();
-
+        // 1 个IO线程
         bossGroup = new NioEventLoopGroup(1, new DefaultThreadFactory("NettyServerBoss", true));
-        workerGroup = new NioEventLoopGroup(getUrl().getPositiveParameter(Constants.IO_THREADS_KEY, Constants.DEFAULT_IO_THREADS),
+        workerGroup = new NioEventLoopGroup(getUrl().getPositiveParameter(Constants.IO_THREADS_KEY, Constants.DEFAULT_IO_THREADS), // 工作线程,默认按照 (CPU核心+1 同 32) 取最小值
                 new DefaultThreadFactory("NettyServerWorker", true));
-
+        // Netty处理类
         final NettyServerHandler nettyServerHandler = new NettyServerHandler(getUrl(), this);
         channels = nettyServerHandler.getChannels();
 
@@ -84,7 +84,7 @@ public class NettyServer extends AbstractServer implements Server {
                 .childHandler(new ChannelInitializer<NioSocketChannel>() {
                     @Override
                     protected void initChannel(NioSocketChannel ch) throws Exception {
-                        NettyCodecAdapter adapter = new NettyCodecAdapter(getCodec(), getUrl(), NettyServer.this);
+                        NettyCodecAdapter adapter = new NettyCodecAdapter(getCodec(), getUrl(), NettyServer.this); // 编解码适配器
                         ch.pipeline()//.addLast("logging",new LoggingHandler(LogLevel.INFO))//for debug
                                 .addLast("decoder", adapter.getDecoder())
                                 .addLast("encoder", adapter.getEncoder())
@@ -100,7 +100,7 @@ public class NettyServer extends AbstractServer implements Server {
 
     @Override
     protected void doClose() throws Throwable {
-        try {
+        try { // 首先关闭Server
             if (channel != null) {
                 // unbind.
                 channel.close();
@@ -108,7 +108,7 @@ public class NettyServer extends AbstractServer implements Server {
         } catch (Throwable e) {
             logger.warn(e.getMessage(), e);
         }
-        try {
+        try { // 依次关闭客户端
             Collection<com.alibaba.dubbo.remoting.Channel> channels = getChannels();
             if (channels != null && channels.size() > 0) {
                 for (com.alibaba.dubbo.remoting.Channel channel : channels) {
@@ -138,7 +138,7 @@ public class NettyServer extends AbstractServer implements Server {
             logger.warn(e.getMessage(), e);
         }
     }
-
+    // 获取通道信息,并清除已关闭的连接
     @Override
     public Collection<Channel> getChannels() {
         Collection<Channel> chs = new HashSet<Channel>();
@@ -156,7 +156,7 @@ public class NettyServer extends AbstractServer implements Server {
     public Channel getChannel(InetSocketAddress remoteAddress) {
         return channels.get(NetUtils.toAddressString(remoteAddress));
     }
-
+    // 是否激活
     @Override
     public boolean isBound() {
         return channel.isActive();

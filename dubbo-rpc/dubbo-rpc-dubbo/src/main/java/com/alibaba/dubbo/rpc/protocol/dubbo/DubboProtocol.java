@@ -252,9 +252,9 @@ public class DubboProtocol extends AbstractProtocol {
         optimizeSerialization(url);
         return exporter;
     }
-
+    // 本地暴露服务后,开启接收请求的Server
     private void openServer(URL url) {
-        // find server.
+        // find server. // ip:port
         String key = url.getAddress();
         //client can export a service which's only for server to invoke
         boolean isServer = url.getParameter(Constants.IS_SERVER_KEY, true);
@@ -281,7 +281,7 @@ public class DubboProtocol extends AbstractProtocol {
 
         url = url.addParameter(Constants.CODEC_KEY, DubboCodec.NAME);
         ExchangeServer server;
-        try {
+        try { // 开启服务,绑定端口,设置请求处理器(requestHandler)
             server = Exchangers.bind(url, requestHandler);
         } catch (RemotingException e) {
             throw new RpcException("Fail to start server(url: " + url + ") " + e.getMessage(), e);
@@ -364,7 +364,7 @@ public class DubboProtocol extends AbstractProtocol {
      * Get shared connection 共享客户端
      */
     private ExchangeClient getSharedClient(URL url) {
-        String key = url.getAddress(); // 缓存维护一台机器的共享连接
+        String key = url.getAddress(); // 服务提供者的地址信息
         ReferenceCountExchangeClient client = referenceClientMap.get(key);
         if (client != null) {
             if (!client.isClosed()) {
@@ -380,10 +380,10 @@ public class DubboProtocol extends AbstractProtocol {
             if (referenceClientMap.containsKey(key)) {
                 return referenceClientMap.get(key);
             }
-
+            // 初始化客户端
             ExchangeClient exchangeClient = initClient(url);
             client = new ReferenceCountExchangeClient(exchangeClient, ghostClientMap);
-            referenceClientMap.put(key, client);
+            referenceClientMap.put(key, client); // 每个服务提供者维护一个客户端连接
             ghostClientMap.remove(key);
             locks.remove(key);
             return client;

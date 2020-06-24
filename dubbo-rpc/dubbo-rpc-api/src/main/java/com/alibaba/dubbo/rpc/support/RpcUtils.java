@@ -144,22 +144,22 @@ public class RpcUtils {
         }
         return invocation.getParameterTypes();
     }
-
+    // 是否是异步 通过async参数设置
     public static boolean isAsync(URL url, Invocation inv) {
         boolean isAsync;
         if (Boolean.TRUE.toString().equals(inv.getAttachment(Constants.ASYNC_KEY))) {
             isAsync = true;
-        } else {
+        } else { // 默认同步
             isAsync = url.getMethodParameter(getMethodName(inv), Constants.ASYNC_KEY, false);
         }
         return isAsync;
     }
-
+    // 是否是单向请求 通过return参数设置
     public static boolean isOneway(URL url, Invocation inv) {
         boolean isOneway;
         if (Boolean.FALSE.toString().equals(inv.getAttachment(Constants.RETURN_KEY))) {
             isOneway = true;
-        } else {
+        } else { // 默认双向请求
             isOneway = !url.getMethodParameter(getMethodName(inv), Constants.RETURN_KEY, true);
         }
         return isOneway;

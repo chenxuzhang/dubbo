@@ -25,15 +25,15 @@ import com.alibaba.dubbo.remoting.Client;
 import com.alibaba.dubbo.remoting.exchange.Request;
 
 import java.util.Collection;
-
+// 心跳检测任务(客户端、服务端)
 final class HeartBeatTask implements Runnable {
 
     private static final Logger logger = LoggerFactory.getLogger(HeartBeatTask.class);
-
+    // 获取连接通道,用于发送心跳检测
     private ChannelProvider channelProvider;
-
+    // 心跳检测时间
     private int heartbeat;
-
+    // 心跳检测超时时间
     private int heartbeatTimeout;
 
     HeartBeatTask(ChannelProvider provider, int heartbeat, int heartbeatTimeout) {
@@ -55,28 +55,28 @@ final class HeartBeatTask implements Runnable {
                             HeaderExchangeHandler.KEY_READ_TIMESTAMP);
                     Long lastWrite = (Long) channel.getAttribute(
                             HeaderExchangeHandler.KEY_WRITE_TIMESTAMP);
-                    if ((lastRead != null && now - lastRead > heartbeat)
-                            || (lastWrite != null && now - lastWrite > heartbeat)) {
-                        Request req = new Request();
+                    if ((lastRead != null && now - lastRead > heartbeat) // 心跳请求接受的时间判断
+                            || (lastWrite != null && now - lastWrite > heartbeat)) { // 心跳请求发送的时间判断
+                        Request req = new Request(); // 构建请求信息
                         req.setVersion(Version.getProtocolVersion());
-                        req.setTwoWay(true);
+                        req.setTwoWay(true); // 双向请求。HeartbeatHandler类在接收到请求后会构建响应请求并发送。同样由HeartbeatHandler接收到响应请求。期间会记录时间戳,供此处判断心跳时间
                         req.setEvent(Request.HEARTBEAT_EVENT);
                         channel.send(req);
                         if (logger.isDebugEnabled()) {
                             logger.debug("Send heartbeat to remote channel " + channel.getRemoteAddress()
                                     + ", cause: The channel has no data-transmission exceeds a heartbeat period: " + heartbeat + "ms");
                         }
-                    }
+                    } // 超时判断,通过接收到心跳请求的时间来判定
                     if (lastRead != null && now - lastRead > heartbeatTimeout) {
                         logger.warn("Close channel " + channel
                                 + ", because heartbeat read idle time out: " + heartbeatTimeout + "ms");
                         if (channel instanceof Client) {
-                            try {
+                            try { // 重新连接通道
                                 ((Client) channel).reconnect();
                             } catch (Exception e) {
                                 //do nothing
                             }
-                        } else {
+                        } else { // 关闭通道
                             channel.close();
                         }
                     }

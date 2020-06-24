@@ -34,13 +34,13 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @io.netty.channel.ChannelHandler.Sharable
 public class NettyServerHandler extends ChannelDuplexHandler {
-
+    // 客户端的通道维护列表。key:ip:port,value:客户端通道。同一客户端多个连接,端口号不同
     private final Map<String, Channel> channels = new ConcurrentHashMap<String, Channel>(); // <ip:port, channel>
 
     private final URL url;
 
     private final ChannelHandler handler;
-
+    // ChannelHandler == NettyServer
     public NettyServerHandler(URL url, ChannelHandler handler) {
         if (url == null) {
             throw new IllegalArgumentException("url == null");
@@ -55,7 +55,7 @@ public class NettyServerHandler extends ChannelDuplexHandler {
     public Map<String, Channel> getChannels() {
         return channels;
     }
-
+    // 连接激活
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         ctx.fireChannelActive();

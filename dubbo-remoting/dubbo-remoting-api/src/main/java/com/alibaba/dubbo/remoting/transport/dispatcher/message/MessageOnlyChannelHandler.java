@@ -32,7 +32,7 @@ public class MessageOnlyChannelHandler extends WrappedChannelHandler {
     public MessageOnlyChannelHandler(ChannelHandler handler, URL url) {
         super(handler, url);
     }
-
+    // 接收的消息派发至线程池,其他在Netty业务线程进行
     @Override
     public void received(Channel channel, Object message) throws RemotingException {
         ExecutorService cexecutor = getExecutorService();

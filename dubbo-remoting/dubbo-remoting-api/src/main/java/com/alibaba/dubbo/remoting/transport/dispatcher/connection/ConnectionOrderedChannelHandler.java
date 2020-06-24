@@ -37,9 +37,9 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public class ConnectionOrderedChannelHandler extends WrappedChannelHandler {
-
+    // 线程池只有一个永久线程,链表阻塞队列,容量为Integer最大值。该队列是有执行顺序的
     protected final ThreadPoolExecutor connectionExecutor;
-    private final int queuewarninglimit;
+    private final int queuewarninglimit; // 线程队列警告上限
 
     public ConnectionOrderedChannelHandler(ChannelHandler handler, URL url) {
         super(handler, url);
@@ -52,7 +52,7 @@ public class ConnectionOrderedChannelHandler extends WrappedChannelHandler {
         );  // FIXME There's no place to release connectionExecutor!
         queuewarninglimit = url.getParameter(Constants.CONNECT_QUEUE_WARNING_SIZE, Constants.DEFAULT_CONNECT_QUEUE_WARNING_SIZE);
     }
-
+    // 连接事件,派发至connectionExecutor
     @Override
     public void connected(Channel channel) throws RemotingException {
         try {
@@ -62,7 +62,7 @@ public class ConnectionOrderedChannelHandler extends WrappedChannelHandler {
             throw new ExecutionException("connect event", channel, getClass() + " error when process connected event .", t);
         }
     }
-
+    // 关闭连接事件,派发至connectionExecutor
     @Override
     public void disconnected(Channel channel) throws RemotingException {
         try {
@@ -72,7 +72,7 @@ public class ConnectionOrderedChannelHandler extends WrappedChannelHandler {
             throw new ExecutionException("disconnected event", channel, getClass() + " error when process disconnected event .", t);
         }
     }
-
+    // 接收消息事件(客户端 or 服务端)
     @Override
     public void received(Channel channel, Object message) throws RemotingException {
         ExecutorService cexecutor = getExecutorService();
@@ -104,7 +104,7 @@ public class ConnectionOrderedChannelHandler extends WrappedChannelHandler {
             throw new ExecutionException("caught event", channel, getClass() + " error when process caught event .", t);
         }
     }
-
+    // 队列到达上限值后,打印警告日志
     private void checkQueueLength() {
         if (connectionExecutor.getQueue().size() > queuewarninglimit) {
             logger.warn(new IllegalThreadStateException("connectionordered channel handler `queue size: " + connectionExecutor.getQueue().size() + " exceed the warning limit number :" + queuewarninglimit));

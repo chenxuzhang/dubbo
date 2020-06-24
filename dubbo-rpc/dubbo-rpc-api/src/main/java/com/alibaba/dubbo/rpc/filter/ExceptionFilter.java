@@ -101,7 +101,7 @@ public class ExceptionFilter implements Filter {
                     if (exception instanceof RpcException) {
                         return result;
                     }
-                    // 包装成运行时异常,返回。TODO 异常会被吃掉,服务端不会打印任何日志
+                    // 将异常信息格式化成字符串,然后填充到RuntimeException实例的message字段,包装成运行时异常。  TODO 异常会被吃掉,服务端不会打印任何日志
                     // otherwise, wrap with RuntimeException and throw back to the client
                     return new RpcResult(new RuntimeException(StringUtils.toString(exception)));
                 } catch (Throwable e) {

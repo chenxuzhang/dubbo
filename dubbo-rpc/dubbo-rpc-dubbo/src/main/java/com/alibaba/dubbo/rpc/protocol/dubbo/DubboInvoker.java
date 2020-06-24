@@ -78,8 +78,8 @@ public class DubboInvoker<T> extends AbstractInvoker<T> {
             currentClient = clients[index.getAndIncrement() % clients.length];
         }
         try {
-            boolean isAsync = RpcUtils.isAsync(getUrl(), invocation);
-            boolean isOneway = RpcUtils.isOneway(getUrl(), invocation);
+            boolean isAsync = RpcUtils.isAsync(getUrl(), invocation); // 默认同步请求
+            boolean isOneway = RpcUtils.isOneway(getUrl(), invocation); // 默认双向请求
             int timeout = getUrl().getMethodParameter(methodName, Constants.TIMEOUT_KEY, Constants.DEFAULT_TIMEOUT);
             if (isOneway) { // isOneway:是否是单向,单向表示无返回值
                 boolean isSent = getUrl().getMethodParameter(methodName, Constants.SENT_KEY, false);
@@ -90,7 +90,7 @@ public class DubboInvoker<T> extends AbstractInvoker<T> {
                 ResponseFuture future = currentClient.request(inv, timeout);
                 RpcContext.getContext().setFuture(new FutureAdapter<Object>(future));
                 return new RpcResult();
-            } else { //  同步请求,且双向,有返回值
+            } else { // 默认请求方式。 同步请求,且双向,有返回值。get()会阻塞当前线程,等待服务端执行完毕后,会唤醒当前线程。
                 RpcContext.getContext().setFuture(null);
                 return (Result) currentClient.request(inv, timeout).get();
             }

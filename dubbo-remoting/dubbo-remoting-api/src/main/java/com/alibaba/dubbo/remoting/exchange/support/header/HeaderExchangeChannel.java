@@ -32,8 +32,8 @@ import com.alibaba.dubbo.remoting.exchange.ResponseFuture;
 import com.alibaba.dubbo.remoting.exchange.support.DefaultFuture;
 
 import java.net.InetSocketAddress;
-
 /**
+ * Channel装饰类。封装待发送消息的消息体、针对有返回值的请求,构建请求-响应 模型
  * ExchangeReceiver
  */
 final class HeaderExchangeChannel implements ExchangeChannel {
@@ -56,7 +56,7 @@ final class HeaderExchangeChannel implements ExchangeChannel {
     static HeaderExchangeChannel getOrAddChannel(Channel ch) {
         if (ch == null) {
             return null;
-        }
+        } // 将HeaderExchangeChannel的实例化对象放入Channel中的attribute中。我看的是Netty4,所以此处ch为NettyChannel实例
         HeaderExchangeChannel ret = (HeaderExchangeChannel) ch.getAttribute(CHANNEL_KEY);
         if (ret == null) {
             ret = new HeaderExchangeChannel(ch);
@@ -72,12 +72,12 @@ final class HeaderExchangeChannel implements ExchangeChannel {
             ch.removeAttribute(CHANNEL_KEY);
         }
     }
-
+    // 无返回值的异步请求
     @Override
     public void send(Object message) throws RemotingException {
         send(message, getUrl().getParameter(Constants.SENT_KEY, false));
     }
-
+    // 无返回值的异步请求
     @Override
     public void send(Object message, boolean sent) throws RemotingException {
         if (closed) {
@@ -95,23 +95,23 @@ final class HeaderExchangeChannel implements ExchangeChannel {
             channel.send(request, sent);
         }
     }
-
+    // 有返回值的请求。可异步 + 返回结果、可同步 + 返回结果
     @Override
     public ResponseFuture request(Object request) throws RemotingException {
         return request(request, channel.getUrl().getPositiveParameter(Constants.TIMEOUT_KEY, Constants.DEFAULT_TIMEOUT));
     }
-
+    // 有返回值的请求。可异步 + 返回结果、可同步 + 返回结果
     @Override
     public ResponseFuture request(Object request, int timeout) throws RemotingException {
         if (closed) {
             throw new RemotingException(this.getLocalAddress(), null, "Failed to send request " + request + ", cause: The channel " + this + " is closed!");
         }
-        // create request.
+        // create request. // 请求消息体
         Request req = new Request();
         req.setVersion(Version.getProtocolVersion());
         req.setTwoWay(true);
         req.setData(request);
-        DefaultFuture future = new DefaultFuture(channel, req, timeout);
+        DefaultFuture future = new DefaultFuture(channel, req, timeout); // 请求-响应 模型
         try {
             channel.send(req);
         } catch (RemotingException e) {

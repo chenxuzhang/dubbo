@@ -20,7 +20,7 @@ import com.alibaba.dubbo.remoting.RemotingException;
 
 /**
  * Future. (API/SPI, Prototype, ThreadSafe)
- *
+ * RPC 请求-响应 模型接口(异步无返回值、异步有返回值、异步转同步)
  * @see com.alibaba.dubbo.remoting.exchange.ExchangeChannel#request(Object)
  * @see com.alibaba.dubbo.remoting.exchange.ExchangeChannel#request(Object, int)
  */
