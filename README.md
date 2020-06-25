@@ -29,3 +29,5 @@ We are now collecting dubbo user info in order to help us to improve dubbo bette
 
 
 [Netty4请求-响应流程](https://github.com/chenxuzhang/dubbo/blob/2.6.x/dubbo-remoting/dubbo-remoting-netty4/src/main/resources/%E8%AF%B7%E6%B1%82-%E5%93%8D%E5%BA%94%E6%B5%81%E7%A8%8B.md)
+
+[Dubbo协议结构](https://github.com/chenxuzhang/dubbo/blob/2.6.x/dubbo-remoting/dubbo-remoting-api/src/main/resources/DubboProtocol.md)
