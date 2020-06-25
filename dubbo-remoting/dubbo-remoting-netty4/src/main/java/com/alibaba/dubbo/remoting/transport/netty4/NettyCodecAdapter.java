@@ -29,8 +29,8 @@ import io.netty.handler.codec.MessageToByteEncoder;
 
 import java.io.IOException;
 import java.util.List;
-
 /**
+ * 编解码适配器
  * NettyCodecAdapter.
  */
 final class NettyCodecAdapter {
@@ -89,16 +89,16 @@ final class NettyCodecAdapter {
 
             try {
                 // decode object.
-                do {
+                do { // 判断是否可读,进行循环读取数据
                     saveReaderIndex = message.readerIndex();
                     try {
                         msg = codec.decode(channel, message);
                     } catch (IOException e) {
                         throw e;
                     }
-                    if (msg == Codec2.DecodeResult.NEED_MORE_INPUT) {
-                        message.readerIndex(saveReaderIndex);
-                        break;
+                    if (msg == Codec2.DecodeResult.NEED_MORE_INPUT) { // 存在拆包情况,
+                        message.readerIndex(saveReaderIndex); // 还原数据读取的位置,等待数据包全部接收,会再次走解码流程。数据维护在缓冲区,不会丢
+                        break; // 强制结束
                     } else {
                         //is it possible to go here ?
                         if (saveReaderIndex == message.readerIndex()) {

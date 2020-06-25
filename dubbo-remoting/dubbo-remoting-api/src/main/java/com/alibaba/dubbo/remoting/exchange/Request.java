@@ -38,9 +38,9 @@ public class Request {
     private boolean mTwoWay = true;
     // 事件标记
     private boolean mEvent = false;
-    // !!!
+    // 破损的.解码出现问题.错误的请求
     private boolean mBroken = false;
-    // 请求的数据
+    // 请求的数据(Invocation实例)
     private Object mData;
 
     public Request() {

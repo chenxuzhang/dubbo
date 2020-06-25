@@ -53,7 +53,7 @@ public class DecodeHandler extends AbstractChannelHandlerDelegate {
 
     private void decode(Object message) {
         if (message != null && message instanceof Decodeable) {
-            try {
+            try { // 执行decode方法,会解码接受的结果,并进行字段数据填充。DecodeableRpcResult、DecodeableRpcInvocation为Decodeable实现类
                 ((Decodeable) message).decode();
                 if (log.isDebugEnabled()) {
                     log.debug("Decode decodeable message " + message.getClass().getName());

@@ -36,21 +36,21 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Type;
 import java.util.Map;
-
+// Result实现类
 public class DecodeableRpcResult extends RpcResult implements Codec, Decodeable {
 
     private static final Logger log = LoggerFactory.getLogger(DecodeableRpcResult.class);
-
+    // 通道
     private Channel channel;
-
+    // 序列化类型
     private byte serializationType;
-
+    // 响应体的字节流
     private InputStream inputStream;
-
+    // 需要组装的响应数据对象。最终 响应头 + 响应体 解码后都会填充到此对象
     private Response response;
-
+    // 发起请求的参数
     private Invocation invocation;
-
+    // 是否解码。只能解码一次
     private volatile boolean hasDecoded;
 
     public DecodeableRpcResult(Channel channel, Response response, InputStream is, Invocation invocation, byte id) {
@@ -73,22 +73,22 @@ public class DecodeableRpcResult extends RpcResult implements Codec, Decodeable 
     public Object decode(Channel channel, InputStream input) throws IOException {
         ObjectInput in = CodecSupport.getSerialization(channel.getUrl(), serializationType)
                 .deserialize(channel.getUrl(), input);
-        
+        // 响应data结果在进行编码的时候,会占用一个字节用于表示结果状态
         byte flag = in.readByte();
         switch (flag) {
-            case DubboCodec.RESPONSE_NULL_VALUE:
+            case DubboCodec.RESPONSE_NULL_VALUE: // 正常执行业务逻辑,无返回结果
                 break;
-            case DubboCodec.RESPONSE_VALUE:
+            case DubboCodec.RESPONSE_VALUE: // 正常执行业务逻辑,有返回结果,无attachments
                 try {
-                    Type[] returnType = RpcUtils.getReturnTypes(invocation);
-                    setValue(returnType == null || returnType.length == 0 ? in.readObject() :
+                    Type[] returnType = RpcUtils.getReturnTypes(invocation); // 通过invocation获取方法返回值类型
+                    setValue(returnType == null || returnType.length == 0 ? in.readObject() : // 将字节码反序列化成对象
                             (returnType.length == 1 ? in.readObject((Class<?>) returnType[0])
                                     : in.readObject((Class<?>) returnType[0], returnType[1])));
                 } catch (ClassNotFoundException e) {
                     throw new IOException(StringUtils.toString("Read response data failed.", e));
                 }
                 break;
-            case DubboCodec.RESPONSE_WITH_EXCEPTION:
+            case DubboCodec.RESPONSE_WITH_EXCEPTION: // 异常,无attachments
                 try {
                     Object obj = in.readObject();
                     if (obj instanceof Throwable == false)
@@ -98,14 +98,14 @@ public class DecodeableRpcResult extends RpcResult implements Codec, Decodeable 
                     throw new IOException(StringUtils.toString("Read response data failed.", e));
                 }
                 break;
-            case DubboCodec.RESPONSE_NULL_VALUE_WITH_ATTACHMENTS:
+            case DubboCodec.RESPONSE_NULL_VALUE_WITH_ATTACHMENTS: // 正常执行业务逻辑,无返回结果,有attachments
                 try {
                     setAttachments((Map<String, String>) in.readObject(Map.class));
                 } catch (ClassNotFoundException e) {
                     throw new IOException(StringUtils.toString("Read response data failed.", e));
                 }
                 break;
-            case DubboCodec.RESPONSE_VALUE_WITH_ATTACHMENTS:
+            case DubboCodec.RESPONSE_VALUE_WITH_ATTACHMENTS: // 正常执行业务逻辑,有返回结果,有attachments
                 try {
                     Type[] returnType = RpcUtils.getReturnTypes(invocation);
                     setValue(returnType == null || returnType.length == 0 ? in.readObject() :
@@ -116,7 +116,7 @@ public class DecodeableRpcResult extends RpcResult implements Codec, Decodeable 
                     throw new IOException(StringUtils.toString("Read response data failed.", e));
                 }
                 break;
-            case DubboCodec.RESPONSE_WITH_EXCEPTION_WITH_ATTACHMENTS:
+            case DubboCodec.RESPONSE_WITH_EXCEPTION_WITH_ATTACHMENTS: // 异常 且有 attachments
                 try {
                     Object obj = in.readObject();
                     if (obj instanceof Throwable == false)

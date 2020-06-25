@@ -32,28 +32,28 @@ import java.io.IOException;
 public final class DubboCountCodec implements Codec2 {
 
     private DubboCodec codec = new DubboCodec();
-
+    // 编码
     @Override
     public void encode(Channel channel, ChannelBuffer buffer, Object msg) throws IOException {
         codec.encode(channel, buffer, msg);
     }
-
+    // 解码
     @Override
     public Object decode(Channel channel, ChannelBuffer buffer) throws IOException {
         int save = buffer.readerIndex();
-        MultiMessage result = MultiMessage.create();
+        MultiMessage result = MultiMessage.create(); // 多消息实例
         do {
             Object obj = codec.decode(channel, buffer);
-            if (Codec2.DecodeResult.NEED_MORE_INPUT == obj) {
+            if (Codec2.DecodeResult.NEED_MORE_INPUT == obj) { // 缓冲区读取完毕 or 遇见拆包情况
                 buffer.readerIndex(save);
-                break;
-            } else {
-                result.addMessage(obj);
+                break; // 跳出循环
+            } else { // 正常从缓冲区中读取数据
+                result.addMessage(obj); // 暂存数据
                 logMessageLength(obj, buffer.readerIndex() - save);
-                save = buffer.readerIndex();
+                save = buffer.readerIndex(); // 获取缓冲区读取的下标
             }
         } while (true);
-        if (result.isEmpty()) {
+        if (result.isEmpty()) { // 未读取到数据,拆包情况
             return Codec2.DecodeResult.NEED_MORE_INPUT;
         }
         if (result.size() == 1) {
