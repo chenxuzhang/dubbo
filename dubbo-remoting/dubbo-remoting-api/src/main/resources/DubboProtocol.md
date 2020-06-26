@@ -17,6 +17,6 @@
     
     Response
     正常: 
-        空值: code码 attachments集合信息
-        有值: code码 返回结果对象 attachments集合信息
-    异常: code码 Throwable信息 attachments集合信息
+        空值: code码(1个字节) attachments集合信息
+        有值: code码(1个字节) 返回结果对象 attachments集合信息
+    异常: code码(1个字节) Throwable信息 attachments集合信息

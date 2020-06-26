@@ -61,7 +61,7 @@ public final class DubboCountCodec implements Codec2 {
         }
         return result;
     }
-
+    // 用于记录解码字节数,监控中心会用到
     private void logMessageLength(Object result, int bytes) {
         if (bytes <= 0) {
             return;
