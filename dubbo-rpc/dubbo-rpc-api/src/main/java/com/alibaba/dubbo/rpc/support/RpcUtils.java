@@ -108,7 +108,7 @@ public class RpcUtils {
     }
 
     public static String getMethodName(Invocation invocation) {
-        if (Constants.$INVOKE.equals(invocation.getMethodName())
+        if (Constants.$INVOKE.equals(invocation.getMethodName()) // 泛化
                 && invocation.getArguments() != null
                 && invocation.getArguments().length > 0
                 && invocation.getArguments()[0] instanceof String) {

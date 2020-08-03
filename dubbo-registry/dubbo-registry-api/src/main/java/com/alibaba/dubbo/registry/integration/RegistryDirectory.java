@@ -52,10 +52,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 /**
- * RegistryDirectory
- *
+ * 每个消费者引用都会实例化一个RegistryDirectory
+ * 注册目录服务
+ * 分为2阶段。第一阶段:被通知阶段,解析目录下的URL并转成对应的对象实体(Configurator、Invoker、Router)。第二阶段:调用阶段,根据被调用的方法的名称,获取对应的Invoker,然后通过Router进行过滤返回
  */
 public class RegistryDirectory<T> extends AbstractDirectory<T> implements NotifyListener {
 
@@ -77,7 +77,7 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
     private volatile boolean forbidden = false; // 是否禁止,false:允许访问,true:禁止访问
 
     private volatile URL overrideDirectoryUrl; // Initialization at construction time, assertion not null, and always assign non null value
-
+    // 已经注册的消费端URL
     private volatile URL registeredConsumerUrl;
 
     /**
@@ -588,12 +588,12 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
             throw new RpcException(RpcException.FORBIDDEN_EXCEPTION,
                 "No provider available from registry " + getUrl().getAddress() + " for service " + getConsumerUrl().getServiceKey() + " on consumer " +  NetUtils.getLocalHost()
                         + " use dubbo version " + Version.getVersion() + ", please check status of providers(disabled, not registered or in blacklist).");
-        }
-        List<Invoker<T>> invokers = null;
+        } // 通过方法名称匹配Invoker
+        List<Invoker<T>> invokers = null; // 匹配的方法调用程序
         Map<String, List<Invoker<T>>> localMethodInvokerMap = this.methodInvokerMap; // local reference
         if (localMethodInvokerMap != null && localMethodInvokerMap.size() > 0) {
-            String methodName = RpcUtils.getMethodName(invocation);
-            Object[] args = RpcUtils.getArguments(invocation);
+            String methodName = RpcUtils.getMethodName(invocation); // 方法名(可能是泛化调用)
+            Object[] args = RpcUtils.getArguments(invocation); // 方法参数(可能是泛化调用)
             if (args != null && args.length > 0 && args[0] != null
                     && (args[0] instanceof String || args[0].getClass().isEnum())) {
                 invokers = localMethodInvokerMap.get(methodName + "." + args[0]); // The routing can be enumerated according to the first parameter

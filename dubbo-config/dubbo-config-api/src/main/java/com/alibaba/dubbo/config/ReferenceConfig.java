@@ -76,7 +76,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
     // client type
     private String client;
     // url for peer-to-peer invocation
-    private String url;
+    private String url; // url 调用服务
     // method configs
     private List<MethodConfig> methods;
     // default config
@@ -391,7 +391,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
                     throw new IllegalStateException("No such any registry to reference " + interfaceName + " on the consumer " + NetUtils.getLocalHost() + " use dubbo version " + Version.getVersion() + ", please config <dubbo:registry address=\"...\" /> to your spring config.");
                 }
             }
-            // url 注册中心配置信息
+            // size == 1. 返回的invoker是AbstractClusterInvoker的子类。持有RegistryDirectory(对应一个服务类,多个节点)引用
             if (urls.size() == 1) {
                 invoker = refprotocol.refer(interfaceClass, urls.get(0));
             } else {

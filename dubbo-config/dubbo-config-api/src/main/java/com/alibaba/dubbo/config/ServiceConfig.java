@@ -79,7 +79,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
 
     private static final ScheduledExecutorService delayExportExecutor = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("DubboServiceDelayExporter", true));
     private final List<URL> urls = new ArrayList<URL>();
-    private final List<Exporter<?>> exporters = new ArrayList<Exporter<?>>();
+    private final List<Exporter<?>> exporters = new ArrayList<Exporter<?>>(); // 服务销毁时,用于进行资源的释放
     // interface type
     private String interfaceName;
     private Class<?> interfaceClass;
@@ -356,7 +356,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void doExportUrls() {
         List<URL> registryURLs = loadRegistries(true);
-        for (ProtocolConfig protocolConfig : protocols) {
+        for (ProtocolConfig protocolConfig : protocols) { // 遍历ProtocolConfig,
             doExportUrlsFor1Protocol(protocolConfig, registryURLs);
         }
     }
@@ -470,7 +470,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         }
         // TODO 暴露服务host?
         String host = this.findConfigedHosts(protocolConfig, registryURLs, map);
-        Integer port = this.findConfigedPorts(protocolConfig, name, map);
+        Integer port = this.findConfigedPorts(protocolConfig, name, map); // 组装协议相关的URL.dubbo、host、port、... 也就是说服务的访问地址
         URL url = new URL(name, host, port, (contextPath == null || contextPath.length() == 0 ? "" : contextPath + "/") + path, map);
 
         if (ExtensionLoader.getExtensionLoader(ConfiguratorFactory.class)
@@ -491,7 +491,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
             if (!Constants.SCOPE_LOCAL.toString().equalsIgnoreCase(scope)) { // 非local
                 if (logger.isInfoEnabled()) {
                     logger.info("Export dubbo service " + interfaceClass.getName() + " to url " + url);
-                }
+                } // 注册中心url集合
                 if (registryURLs != null && !registryURLs.isEmpty()) {
                     for (URL registryURL : registryURLs) {
                         url = url.addParameterIfAbsent(Constants.DYNAMIC_KEY, registryURL.getParameter(Constants.DYNAMIC_KEY));
@@ -513,7 +513,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                         DelegateProviderMetaDataInvoker wrapperInvoker = new DelegateProviderMetaDataInvoker(invoker, this);
                         // wrapperInvoker获取的protocol为registry(所以先执行RegistryProtocol),然而RegistryProtocol会通过URL获取Parameter中的export键的值(提供者的URLProtocolConfig + ProviderConfig的信息)
                         Exporter<?> exporter = protocol.export(wrapperInvoker);
-                        exporters.add(exporter);
+                        exporters.add(exporter); // exporter用于触发销毁时使用
                     }
                 } else {
                     Invoker<?> invoker = proxyFactory.getInvoker(ref, (Class) interfaceClass, url);

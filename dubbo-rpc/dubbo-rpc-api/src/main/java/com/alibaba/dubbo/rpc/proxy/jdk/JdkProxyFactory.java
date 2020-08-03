@@ -29,13 +29,13 @@ import java.lang.reflect.Proxy;
  * JavaassistRpcProxyFactory
  */
 public class JdkProxyFactory extends AbstractProxyFactory {
-
+    // 服务消费者代理类
     @Override
     @SuppressWarnings("unchecked")
     public <T> T getProxy(Invoker<T> invoker, Class<?>[] interfaces) {
         return (T) Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(), interfaces, new InvokerInvocationHandler(invoker));
     }
-
+    // 服务提供者
     @Override
     public <T> Invoker<T> getInvoker(T proxy, Class<T> type, URL url) {
         return new AbstractProxyInvoker<T>(proxy, type, url) {

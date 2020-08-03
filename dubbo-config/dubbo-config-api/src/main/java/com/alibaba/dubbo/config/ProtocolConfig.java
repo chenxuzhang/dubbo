@@ -114,7 +114,7 @@ public class ProtocolConfig extends AbstractConfig {
     // status check
     private String status;
 
-    // whether to register
+    // whether to register 服务是否注册
     private Boolean register;
 
     // parameters

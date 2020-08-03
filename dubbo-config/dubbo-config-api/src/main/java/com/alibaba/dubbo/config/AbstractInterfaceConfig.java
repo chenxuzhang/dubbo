@@ -159,7 +159,7 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
     }
     /** 加载注册中心配置并转换成URL */
     protected List<URL> loadRegistries(boolean provider) {
-        checkRegistry();
+        checkRegistry(); // 将RegistryConfig配置转换成URL对象,且协议头为registry
         List<URL> registryList = new ArrayList<URL>();
         if (registries != null && !registries.isEmpty()) {
             for (RegistryConfig config : registries) {
