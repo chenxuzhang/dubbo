@@ -307,10 +307,10 @@ public class RegistryProtocol implements Protocol {
             registry.register(registeredConsumerUrl);
             directory.setRegisteredConsumerUrl(registeredConsumerUrl);
         }
-        directory.subscribe(subscribeUrl.addParameter(Constants.CATEGORY_KEY, // 订阅目录
-                Constants.PROVIDERS_CATEGORY
+        directory.subscribe(subscribeUrl.addParameter(Constants.CATEGORY_KEY, // 订阅目录(providers、configurators、routers)
+                Constants.PROVIDERS_CATEGORY // prividers 解析为 FilterInvoker1->FilterInvoker2->DoubleInvoker 调用链
                         + "," + Constants.CONFIGURATORS_CATEGORY
-                        + "," + Constants.ROUTERS_CATEGORY));
+                        + "," + Constants.ROUTERS_CATEGORY)); // routers 解析为Router实例,在进行调用时,过滤服务提供者Invoker调用程序
 
         Invoker invoker = cluster.join(directory);
         ProviderConsumerRegTable.registerConsumer(invoker, url, subscribeUrl, directory);
