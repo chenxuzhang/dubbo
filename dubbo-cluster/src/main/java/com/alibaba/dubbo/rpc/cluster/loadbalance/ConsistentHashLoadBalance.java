@@ -36,7 +36,7 @@ import java.util.concurrent.ConcurrentMap;
  *
  */
 public class ConsistentHashLoadBalance extends AbstractLoadBalance {
-    // 服务方法和一致性哈希选择器映射关系
+    // 服务方法和一致性哈希选择器映射关系。key:服务的URL + 方法名称。value:
     private final ConcurrentMap<String, ConsistentHashSelector<?>> selectors = new ConcurrentHashMap<String, ConsistentHashSelector<?>>();
 
     @SuppressWarnings("unchecked")
@@ -74,23 +74,23 @@ public class ConsistentHashLoadBalance extends AbstractLoadBalance {
                 argumentIndex[i] = Integer.parseInt(index[i]);
             }  // 构建虚拟节点
             for (Invoker<T> invoker : invokers) {
-                String address = invoker.getUrl().getAddress();
+                String address = invoker.getUrl().getAddress(); // 服务提供者地址
                 for (int i = 0; i < replicaNumber / 4; i++) {
-                    byte[] digest = md5(address + i);
-                    for (int h = 0; h < 4; h++) {
+                    byte[] digest = md5(address + i); // md5生成同一个服务提供者地址的不同摘要(默认同一个地址可生成40个不同摘要)
+                    for (int h = 0; h < 4; h++) { // 相同的摘要,生成4个不同的hash值
                         long m = hash(digest, h);
-                        virtualInvokers.put(m, invoker);
+                        virtualInvokers.put(m, invoker); // 默认共计160个虚拟节点
                     }
                 }
             }
         }
 
         public Invoker<T> select(Invocation invocation) {
-            String key = toKey(invocation.getArguments());
+            String key = toKey(invocation.getArguments()); // 通过请求参数进行hash取值,进行hash环匹配
             byte[] digest = md5(key); // key 进行 md5操作后,在进行hash
             return selectForKey(hash(digest, 0));
         }
-        // 参数拼接进行构建key
+        // 请求参数拼接进行构建key
         private String toKey(Object[] args) {
             StringBuilder buf = new StringBuilder();
             for (int i : argumentIndex) {

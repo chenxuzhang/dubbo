@@ -1208,9 +1208,9 @@ public final class URL implements Serializable {
     public InetSocketAddress toInetSocketAddress() {
         return new InetSocketAddress(host, port);
     }
-
+    // group名称 + "/" + 服务接口类名 + ":" + 版本号
     public String getServiceKey() {
-        String inf = getServiceInterface();
+        String inf = getServiceInterface(); // 服务接口名称
         if (inf == null) return null;
         StringBuilder buf = new StringBuilder();
         String group = getParameter(Constants.GROUP_KEY);

@@ -29,7 +29,7 @@ import java.util.List;
  * 负载均衡模板类
  */
 public abstract class AbstractLoadBalance implements LoadBalance {
-    // 计算权重逻辑
+    // uptime:计算提供者启动时间。warmup:预热时长。weight:权重数值(默认100,可设置) 计算权重逻辑
     static int calculateWarmupWeight(int uptime, int warmup, int weight) {
         int ww = (int) ((float) uptime / ((float) warmup / (float) weight));
         return ww < 1 ? 1 : (ww > weight ? weight : ww);

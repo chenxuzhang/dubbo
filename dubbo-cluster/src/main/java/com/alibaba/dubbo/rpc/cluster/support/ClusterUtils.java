@@ -30,7 +30,7 @@ public class ClusterUtils {
 
     private ClusterUtils() {
     }
-
+    // remoteUrl 服务提供者URL
     public static URL mergeUrl(URL remoteUrl, Map<String, String> localMap) {
         Map<String, String> map = new HashMap<String, String>();
         Map<String, String> remoteMap = remoteUrl.getParameters();
@@ -83,7 +83,7 @@ public class ClusterUtils {
             if (methods != null && methods.length() > 0) {
                 map.put(Constants.METHODS_KEY, methods);
             }
-            // 保留提供程序url的时间戳
+            // 保留提供程序url的时间戳。用于消费者调用服务的时候,负载均衡在计算权重的时候使用(jvm预热,即启动时长未到设置的时间),预热则需要针对服务提供者降权
             String remoteTimestamp = remoteMap.get(Constants.TIMESTAMP_KEY);
             if (remoteTimestamp != null && remoteTimestamp.length() > 0) {
                 map.put(Constants.REMOTE_TIMESTAMP_KEY, remoteMap.get(Constants.TIMESTAMP_KEY));

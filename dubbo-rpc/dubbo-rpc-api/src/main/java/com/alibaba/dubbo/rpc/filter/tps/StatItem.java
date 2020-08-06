@@ -29,7 +29,7 @@ class StatItem {
     private AtomicInteger token;
 
     private int rate;
-
+    // name:服务接口名+分组+版本号。rate:tps上限。interval:单位时间内,不能超过tps上限
     StatItem(String name, int rate, long interval) {
         this.name = name;
         this.rate = rate;
@@ -40,11 +40,11 @@ class StatItem {
 
     public boolean isAllowable() {
         long now = System.currentTimeMillis();
-        if (now > lastResetTime + interval) {
-            token.set(rate);
-            lastResetTime = now;
-        }
-
+        if (now > lastResetTime + interval) { // 判断当前时间是否超过tps单位时间。true:超过
+            token.set(rate); // 重置tps上限量,单位时间内没处理一个请求,token则会减一
+            lastResetTime = now; // 更新单位时间
+        } // 问题:单位时间结束到开始。如果请求堆积到这两个时间点,会造成成倍的请求。解决办法是"滑动窗口"
+        // 轮询 + 原子操作 保证了值修改的原子性
         int value = token.get();
         boolean flag = false;
         while (value > 0 && !flag) {

@@ -37,13 +37,13 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class RoundRobinLoadBalance extends AbstractLoadBalance {
     public static final String NAME = "roundrobin";
-    
+    // 回收期时间
     private static int RECYCLE_PERIOD = 60000;
-    
+    // 权重轮询算法
     protected static class WeightedRoundRobin {
-        private int weight;
+        private int weight; // 权重
         private AtomicLong current = new AtomicLong(0);
-        private long lastUpdate;
+        private long lastUpdate; // 最后更新时间
         public int getWeight() {
             return weight;
         }
@@ -64,7 +64,7 @@ public class RoundRobinLoadBalance extends AbstractLoadBalance {
             this.lastUpdate = lastUpdate;
         }
     }
-
+    // 提供者方法对应的Invoker轮询权重算法   key:服务提供者方法名、key:服务提供者URL的字符串、value:轮询权重算法
     private ConcurrentMap<String, ConcurrentMap<String, WeightedRoundRobin>> methodWeightMap = new ConcurrentHashMap<String, ConcurrentMap<String, WeightedRoundRobin>>();
     private AtomicBoolean updateLock = new AtomicBoolean();
     
@@ -94,31 +94,31 @@ public class RoundRobinLoadBalance extends AbstractLoadBalance {
             methodWeightMap.putIfAbsent(key, new ConcurrentHashMap<String, WeightedRoundRobin>());
             map = methodWeightMap.get(key);
         }
-        int totalWeight = 0;
-        long maxCurrent = Long.MIN_VALUE;
-        long now = System.currentTimeMillis();
+        int totalWeight = 0; // 总权重
+        long maxCurrent = Long.MIN_VALUE; // 最大值
+        long now = System.currentTimeMillis(); // 当前时间
         Invoker<T> selectedInvoker = null;
         WeightedRoundRobin selectedWRR = null;
-        for (Invoker<T> invoker : invokers) {
-            String identifyString = invoker.getUrl().toIdentityString();
+        for (Invoker<T> invoker : invokers) { // 迭代所有的Invoker
+            String identifyString = invoker.getUrl().toIdentityString(); // 服务提供者URL的字符串
             WeightedRoundRobin weightedRoundRobin = map.get(identifyString);
             int weight = getWeight(invoker, invocation);
             if (weight < 0) {
                 weight = 0;
-            }
+            } // 组装WeightedRoundRobin 实例数据
             if (weightedRoundRobin == null) {
                 weightedRoundRobin = new WeightedRoundRobin();
                 weightedRoundRobin.setWeight(weight);
                 map.putIfAbsent(identifyString, weightedRoundRobin);
                 weightedRoundRobin = map.get(identifyString);
-            }
+            } // 权重不同,重新设置权重(预热期)
             if (weight != weightedRoundRobin.getWeight()) {
                 //weight changed
                 weightedRoundRobin.setWeight(weight);
-            }
-            long cur = weightedRoundRobin.increaseCurrent();
+            } // increaseCurrent() 每次调用 +weight
+            long cur = weightedRoundRobin.increaseCurrent(); // +weight
             weightedRoundRobin.setLastUpdate(now);
-            if (cur > maxCurrent) {
+            if (cur > maxCurrent) { // 循环迭代出最大的值,该Invoker则是选出来的Invoker
                 maxCurrent = cur;
                 selectedInvoker = invoker;
                 selectedWRR = weightedRoundRobin;
@@ -143,9 +143,9 @@ public class RoundRobinLoadBalance extends AbstractLoadBalance {
                     updateLock.set(false);
                 }
             }
-        }
+        } // 选出的Invoker对应的WeightedRoundRobin,设置最新“权重” -totalWeight
         if (selectedInvoker != null) {
-            selectedWRR.sel(totalWeight);
+            selectedWRR.sel(totalWeight); // -totalWeight
             return selectedInvoker;
         }
         // should not happen here

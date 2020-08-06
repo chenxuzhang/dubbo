@@ -33,8 +33,8 @@ public class DefaultTPSLimiter implements TPSLimiter {
         int rate = url.getParameter(Constants.TPS_LIMIT_RATE_KEY, -1);
         long interval = url.getParameter(Constants.TPS_LIMIT_INTERVAL_KEY,
                 Constants.DEFAULT_TPS_LIMIT_INTERVAL);
-        String serviceKey = url.getServiceKey();
-        if (rate > 0) {
+        String serviceKey = url.getServiceKey(); // group名称 + "/" + 服务接口类名 + ":" + 版本号
+        if (rate > 0) { // TPS 开启
             StatItem statItem = stats.get(serviceKey);
             if (statItem == null) {
                 stats.putIfAbsent(serviceKey,
@@ -42,7 +42,7 @@ public class DefaultTPSLimiter implements TPSLimiter {
                 statItem = stats.get(serviceKey);
             }
             return statItem.isAllowable();
-        } else {
+        } else { // TPS 关闭
             StatItem statItem = stats.get(serviceKey);
             if (statItem != null) {
                 stats.remove(serviceKey);
