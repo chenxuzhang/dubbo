@@ -226,7 +226,7 @@ public class DubboProtocol extends AbstractProtocol {
 
     @Override
     public <T> Exporter<T> export(Invoker<T> invoker) throws RpcException {
-        URL url = invoker.getUrl();
+        URL url = invoker.getUrl(); // URL为ProtocolConfig配置的数据
         // key的组成:[group/服务的接口路径:版本号:服务端口号] 例:test-group/com.test.springboottest.dubbo.Test:1.1.1-release:12881
         // export service.
         String key = serviceKey(url);

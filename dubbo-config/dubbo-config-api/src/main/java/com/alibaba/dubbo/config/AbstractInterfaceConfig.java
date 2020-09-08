@@ -189,9 +189,9 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
                         }
                     }
                     List<URL> urls = UrlUtils.parseURLs(address, map);
-                    for (URL url : urls) {
+                    for (URL url : urls) { // 将注册中心配置中的协议头备份,后续在RegistryProtocol中会用到
                         url = url.addParameter(Constants.REGISTRY_KEY, url.getProtocol());
-                        url = url.setProtocol(Constants.REGISTRY_PROTOCOL);
+                        url = url.setProtocol(Constants.REGISTRY_PROTOCOL); // 设置注册协议为registry,首先通过注册中心做操作 RegistryProtocol,然后本地暴露服务,开启服务接受请求,然后将本项目访问URL注册到注册中心
                         if ((provider && url.getParameter(Constants.REGISTER_KEY, true))
                                 || (!provider && url.getParameter(Constants.SUBSCRIBE_KEY, true))) {
                             registryList.add(url);

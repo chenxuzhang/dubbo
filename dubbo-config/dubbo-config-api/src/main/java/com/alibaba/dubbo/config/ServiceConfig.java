@@ -472,7 +472,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         String host = this.findConfigedHosts(protocolConfig, registryURLs, map);
         Integer port = this.findConfigedPorts(protocolConfig, name, map); // 组装协议相关的URL.dubbo、host、port、... 也就是说服务的访问地址
         URL url = new URL(name, host, port, (contextPath == null || contextPath.length() == 0 ? "" : contextPath + "/") + path, map);
-
+        // ↑↑↑↑↑↑↑↑ ProtocolConfig 对应的URL
         if (ExtensionLoader.getExtensionLoader(ConfiguratorFactory.class)
                 .hasExtension(url.getProtocol())) {
             url = ExtensionLoader.getExtensionLoader(ConfiguratorFactory.class)

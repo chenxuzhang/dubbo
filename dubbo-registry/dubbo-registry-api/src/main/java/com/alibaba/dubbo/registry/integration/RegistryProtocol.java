@@ -138,14 +138,14 @@ public class RegistryProtocol implements Protocol {
         // 获取RegistryFactory的实现类(double、redis、zookeeper...)
         //registry provider 注册提供者连接到zookeeper 或 redis 或 ...
         final Registry registry = getRegistry(originInvoker);
-        final URL registeredProviderUrl = getRegisteredProviderUrl(originInvoker);
+        final URL registeredProviderUrl = getRegisteredProviderUrl(originInvoker); // 服务提供者的URL,会将该URL注册到注册中心
 
         //to judge to delay publish whether or not // 服务是否注册到远程(即注册到注册中心,供远程消费者获取连接进行调用)
         boolean register = registeredProviderUrl.getParameter("register", true);
         // 向注册表,注册服务
         ProviderConsumerRegTable.registerProvider(originInvoker, registryUrl, registeredProviderUrl);
         // 需要注册。调用Registry实现类的register方法
-        if (register) {
+        if (register) { // 通过registryUrl获取Registry实例,然后将registeredProviderUrl注册到注册中心
             register(registryUrl, registeredProviderUrl); // 向注册中心注册数据
             ProviderConsumerRegTable.getProviderWrapper(originInvoker).setReg(true);
         }
@@ -167,8 +167,8 @@ public class RegistryProtocol implements Protocol {
         if (exporter == null) {
             synchronized (bounds) {
                 exporter = (ExporterChangeableWrapper<T>) bounds.get(key);
-                if (exporter == null) { // getProviderUrl 获取服务提供者url。通过Parameter获取export键的值
-                    final Invoker<?> invokerDelegete = new InvokerDelegete<T>(originInvoker, getProviderUrl(originInvoker));
+                if (exporter == null) { // getProviderUrl 获取服务提供者url,DubboProtocol会通过此URL开启Server服务,接受请求。通过Parameter获取export键的值
+                    final Invoker<?> invokerDelegete = new InvokerDelegete<T>(originInvoker, getProviderUrl(originInvoker)); // originInvoker中URL保持不变。协议头为registry
                     exporter = new ExporterChangeableWrapper<T>((Exporter<T>) protocol.export(invokerDelegete), originInvoker); // protocol.export(invokerDelegete) 通过ProtocolConfig解析得出
                     bounds.put(key, exporter);
                 }
@@ -205,7 +205,7 @@ public class RegistryProtocol implements Protocol {
         URL registryUrl = getRegistryUrl(originInvoker);
         return registryFactory.getRegistry(registryUrl);
     }
-
+    // 获取注册中心URL,注册中心配置协议头在ServiceConfig中有解析注册中心配置设置
     private URL getRegistryUrl(Invoker<?> originInvoker) {
         URL registryUrl = originInvoker.getUrl();
         if (Constants.REGISTRY_PROTOCOL.equals(registryUrl.getProtocol())) { // 将registry协议头替换为从Parameter中获取的registry键对应的值(例:registry->dubbo(默认)/zookeeper/redis/...)
