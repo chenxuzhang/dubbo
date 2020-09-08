@@ -306,12 +306,12 @@ public class RegistryProtocol implements Protocol {
             URL registeredConsumerUrl = getRegisteredConsumerUrl(subscribeUrl, url);
             registry.register(registeredConsumerUrl);
             directory.setRegisteredConsumerUrl(registeredConsumerUrl);
-        }
+        } // 解析订阅目录下的数据,从string->URL->Configurator/Router/Invoker(通过订阅数据选择***Protocol。DubboProtocol...)
         directory.subscribe(subscribeUrl.addParameter(Constants.CATEGORY_KEY, // 订阅目录(providers、configurators、routers)
                 Constants.PROVIDERS_CATEGORY // prividers 解析为 FilterInvoker1->FilterInvoker2->DoubleInvoker 调用链
                         + "," + Constants.CONFIGURATORS_CATEGORY
                         + "," + Constants.ROUTERS_CATEGORY)); // routers 解析为Router实例,在进行调用时,过滤服务提供者Invoker调用程序
-
+        // @Reference引用 代理类->ClusterInvoker(通过Cluster.join(directory)生成集群中的容错策略,FailoverClusterInvoker、FailfastClusterInvoker...)->方法匹配提供者集合->负载均衡
         Invoker invoker = cluster.join(directory);
         ProviderConsumerRegTable.registerConsumer(invoker, url, subscribeUrl, directory);
         return invoker;

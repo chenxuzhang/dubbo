@@ -46,7 +46,7 @@ public abstract class AbstractDirectory<T> implements Directory<T> {
     private final URL url;
 
     private volatile boolean destroyed = false;
-
+    // 消费者URL consumer/xxxxx
     private volatile URL consumerUrl;
 
     private volatile List<Router> routers;

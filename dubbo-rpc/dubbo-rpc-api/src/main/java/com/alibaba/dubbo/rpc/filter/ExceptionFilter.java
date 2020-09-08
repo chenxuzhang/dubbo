@@ -64,7 +64,7 @@ public class ExceptionFilter implements Filter {
                 try { // TODO 异常分为 Error[继承Throwable]、运行时异常(非检查异常)[继承RuntimeException,继承Exception]、非运行时异常(检查异常)[继承Exception]
                     Throwable exception = result.getException();
                     // (运行时异常取反 且 继承了Exception) == 非运行时异常(检查异常),则抛出
-                    // directly throw if it's checked exception
+                    // directly throw if it's checked exception // 检查异常需要在方法后通过throws进行抛出,估消费放肯定可以引用到类。
                     if (!(exception instanceof RuntimeException) && (exception instanceof Exception)) {
                         return result;
                     }

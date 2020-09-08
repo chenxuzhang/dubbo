@@ -21,13 +21,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 class StatItem {
 
     private String name;
-
+    // 重置时间
     private long lastResetTime;
-
+    // 监控多长时间的tps
     private long interval;
 
     private AtomicInteger token;
-
+    // tps
     private int rate;
     // name:服务接口名+分组+版本号。rate:tps上限。interval:单位时间内,不能超过tps上限
     StatItem(String name, int rate, long interval) {

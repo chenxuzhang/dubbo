@@ -26,7 +26,7 @@ import java.lang.reflect.Method;
  * InvokerHandler
  */
 public class InvokerInvocationHandler implements InvocationHandler {
-
+    // Cluster产生的集群策略Invoker。FailoverClusterInvoker、... 实现了Invoker接口,对外提供调用。
     private final Invoker<?> invoker;
 
     public InvokerInvocationHandler(Invoker<?> handler) {

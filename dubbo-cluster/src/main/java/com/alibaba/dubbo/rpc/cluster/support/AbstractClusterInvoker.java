@@ -234,7 +234,7 @@ public abstract class AbstractClusterInvoker<T> implements Invoker<T> {
         if (contextAttachments != null && contextAttachments.size() != 0) {
             ((RpcInvocation) invocation).addAttachments(contextAttachments);
         }
-        // 服务提供者Invoker列表
+        // 从Directory中获取需要执行的方法对应的Invoker执行器列表(服务的提供者)。下一步就需要针对多个服务提供者进行负载均衡判断,最终返回一个可供调用的Invoker执行器
         List<Invoker<T>> invokers = list(invocation);
         if (invokers != null && !invokers.isEmpty()) { // SPI 获取LoadBalance ,默认random策略
             loadbalance = ExtensionLoader.getExtensionLoader(LoadBalance.class).getExtension(invokers.get(0).getUrl()
@@ -272,7 +272,7 @@ public abstract class AbstractClusterInvoker<T> implements Invoker<T> {
 
     protected abstract Result doInvoke(Invocation invocation, List<Invoker<T>> invokers,
                                        LoadBalance loadbalance) throws RpcException;
-    // 从directory获取服务提供者的Invoker列表
+    // 从directory获取服务提供者的Invoker列表,会通过Router路由策略进行Invoker过滤
     protected List<Invoker<T>> list(Invocation invocation) throws RpcException {
         List<Invoker<T>> invokers = directory.list(invocation);
         return invokers;
